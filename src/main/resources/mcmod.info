@@ -1,0 +1,20 @@
+[
+    {
+        "modid": "realmapcc",
+        "name": "Realmap - Cubic Chunks",
+        "description": "Uses real map data to generate terrain for Cubic Chunks",
+        "version": "${version}",
+        "mcversion": "${mcversion}",
+        "url": "https://daporkchop.net",
+        "updateUrl": "",
+        "authorList": [
+            "DaPorkchop_"
+        ],
+        "credits": "",
+        "logoFile": "",
+        "screenshots": [],
+        "dependencies": [
+            ""
+        ]
+    }
+]
