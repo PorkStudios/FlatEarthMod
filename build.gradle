@@ -32,10 +32,22 @@ minecraft {
 
 repositories {
     mavenCentral()
+    maven {
+        name = "Sonatype"
+        url = "https://oss.sonatype.org/content/repositories/public/"
+    }
+    maven {
+        name = "DaPorkchop_"
+        url = "https://maven.daporkchop.net/"
+    }
 }
 
 dependencies {
-    compile 'net.daporkchop:geotools:1.0-SNAPSHOT'
+    compile project('geotools')
+
+    compile "io.github.opencubicchunks:cubicworldgen:1.12.2-0.0.8.0-SNAPSHOT"
+    compile "io.github.opencubicchunks:cubicchunks-api:1.12.2-0.0.15.0-SNAPSHOT"
+    compile "net.daporkchop.lib:db:0.1.2"
 }
 
 processResources {
@@ -48,7 +60,7 @@ processResources {
         include "mcmod.info"
 
         // replace version and mcversion
-        expand "version":project.version, "mcversion":project.minecraft.version
+        expand "version": project.version, "mcversion": project.minecraft.version
     }
 
     // copy everything else, thats not the mcmod.info
