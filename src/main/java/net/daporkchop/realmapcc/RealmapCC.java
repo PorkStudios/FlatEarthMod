@@ -5,6 +5,7 @@ import io.github.opencubicchunks.cubicchunks.api.util.NotCubicChunksWorldExcepti
 import net.daporkchop.lib.db.DBBuilder;
 import net.daporkchop.lib.db.DatabaseFormat;
 import net.daporkchop.lib.db.PorkDB;
+import net.daporkchop.lib.encoding.compression.EnumCompression;
 import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
 import net.daporkchop.realmapcc.util.RealWorldData;
 import net.daporkchop.realmapcc.util.RealWorldDataSerializer;
@@ -73,6 +74,7 @@ public class RealmapCC {
         progressBar.step("Opening database");
         worldDataDB = new DBBuilder<ChunkPos, RealWorldData>()
                 .setForceOpen(true)
+                .setCompression(EnumCompression.GZIP)
                 .setFormat(DatabaseFormat.ZIP_TREE)
                 .setKeyHasher(new KeyHasherChunkPos())
                 .setValueSerializer(new RealWorldDataSerializer())

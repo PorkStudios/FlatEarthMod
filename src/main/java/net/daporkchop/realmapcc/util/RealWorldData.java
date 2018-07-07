@@ -3,7 +3,7 @@ package net.daporkchop.realmapcc.util;
 import net.daporkchop.lib.binary.PorkBuf;
 
 /**
- * This contains height + biome data from the world map used to calculate everything with, lighting is calculated with this
+ * This contains height + biome data from the world map used to calculate everything with
  *
  * @author DaPorkchop_
  */
