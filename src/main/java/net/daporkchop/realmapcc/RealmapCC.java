@@ -15,7 +15,7 @@ import java.io.File;
         modid = RealmapCC.MOD_ID,
         name = RealmapCC.MOD_NAME,
         version = RealmapCC.VERSION/*,
-        dependencies = "required-after:depmanager@[0.0.2,)"*/
+        dependencies = "required-after:cubicgen"*/
 )
 public class RealmapCC {
 
