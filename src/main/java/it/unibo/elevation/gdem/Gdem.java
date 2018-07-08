@@ -15,45 +15,37 @@ import java.util.logging.Logger;
 import java.util.zip.ZipFile;
 
 /**
+ * @author Simone Rondelli - simone.rondelli2@studio.it.unibo.it
  * @deprecated Experimental, currently there are no further developments.
  * Use instead Google or SRTM implementation
- *
- * @author Simone Rondelli - simone.rondelli2@studio.it.unibo.it
  */
 @Deprecated
 public class Gdem {
 
-	private static final Logger log = Logger.getLogger(Gdem.class.getName());
+    private static final Logger log = Logger.getLogger(Gdem.class.getName());
     private final File localDir;
     private final Map<File, SoftReference<BufferedInputStream>> srtmMap;
 
-	/**
-	 * @param localOnly should only local available files be used? true/false
-	 */
-	public Gdem(boolean localOnly, File localDir) {
-		this.localDir = localDir;
+    /**
+     * @param localOnly should only local available files be used? true/false
+     */
+    public Gdem(boolean localOnly, File localDir) {
+        this.localDir = localDir;
         this.srtmMap = new HashMap<File, SoftReference<BufferedInputStream>>();
 
-	}
+    }
 
-	private static double getILat(double lat) {
-		double dlat = lat - Math.floor(lat);
-		double ilat = dlat * 3600;
-		return ilat;
-	}
+    private static double getILat(double lat) {
+        double dlat = lat - Math.floor(lat);
+        double ilat = dlat * 3600;
+        return ilat;
+    }
 
-	private static double getILon(double lon) {
-		double dlon = lon - Math.floor(lon);
-		double ilon = dlon * 3600;
-		return ilon;
-	}
-
-	private short readShort(BufferedInputStream in) throws IOException {
-		int ch1 = in.read();
-		int ch2 = in.read();
-		return (short) ((ch1 << 8) + (ch2));
-		// return (short) (ch1 + (ch2 << 8));
-	}
+    private static double getILon(double lon) {
+        double dlon = lon - Math.floor(lon);
+        double ilon = dlon * 3600;
+        return ilon;
+    }
 
     public static void main(String[] args) {
 //		double[][] arr = new double[4][30];
@@ -109,6 +101,13 @@ public class Gdem {
         }
         in.close();
         out.close();
+    }
+
+    private short readShort(BufferedInputStream in) throws IOException {
+        int ch1 = in.read();
+        int ch2 = in.read();
+        return (short) ((ch1 << 8) + (ch2));
+        // return (short) (ch1 + (ch2 << 8));
     }
 
     private double getValues(File file, int rowmin, int colmin) throws IOException {

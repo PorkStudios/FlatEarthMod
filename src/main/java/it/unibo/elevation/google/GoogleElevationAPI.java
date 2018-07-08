@@ -15,59 +15,58 @@ import java.util.List;
  */
 public class GoogleElevationAPI extends AbstractWebElevation {
 
-	public static final String BASE_URL = "http://maps.googleapis.com/maps/api/elevation/";
+    public static final String BASE_URL = "http://maps.googleapis.com/maps/api/elevation/";
 
-	public GoogleElevationAPI() throws Exception {
-		this(XML, new GoogleElevationSaxParser());
-	}
+    public GoogleElevationAPI() throws Exception {
+        this(XML, new GoogleElevationSaxParser());
+    }
 
     public GoogleElevationAPI(String format, ElevationParser parser) {
-		super(parser, format);
-	}
+        super(parser, format);
+    }
 
-	/**
-	 * Build the base URL with specified output format
-	 * <p>
-	 * (ie: http://maps.googleapis.com/maps/api/elevation/xml?)
-	 * 
-	 * 
-	 * @return The base url with format
-	 */
-	private String buildBaseUrl() {
+    /**
+     * Build the base URL with specified output format
+     * <p>
+     * (ie: http://maps.googleapis.com/maps/api/elevation/xml?)
+     *
+     * @return The base url with format
+     */
+    private String buildBaseUrl() {
         return BASE_URL + this.getFormat() + "?";
-	}
+    }
 
-	@Override
-	public String buildUrl(double lat, double lon) {
+    @Override
+    public String buildUrl(double lat, double lon) {
         StringBuffer url = new StringBuffer(this.buildBaseUrl());
-		url.append("locations=" + lat + COMMA + lon);
-		url.append("&sensor=false");
-		return url.toString();
-	}
+        url.append("locations=" + lat + COMMA + lon);
+        url.append("&sensor=false");
+        return url.toString();
+    }
 
-	@Override
-	public String buildUrl(String polyline) {
+    @Override
+    public String buildUrl(String polyline) {
         StringBuffer url = new StringBuffer(this.buildBaseUrl());
-		try {
-			url.append("locations=enc:" + URLEncoder.encode(polyline, "UTF8"));
-		} catch (UnsupportedEncodingException ex) {
-			throw new IllegalStateException("Impossible to encode URL", ex);
-		}
-		url.append("&sensor=false");
-		return url.toString();
-	}
+        try {
+            url.append("locations=enc:" + URLEncoder.encode(polyline, "UTF8"));
+        } catch (UnsupportedEncodingException ex) {
+            throw new IllegalStateException("Impossible to encode URL", ex);
+        }
+        url.append("&sensor=false");
+        return url.toString();
+    }
 
-	@Override
-	public String buildUrl(List<GeoPoint> points) {
+    @Override
+    public String buildUrl(List<GeoPoint> points) {
         StringBuffer url = new StringBuffer(this.buildBaseUrl());
-		url.append("locations=");
-		int size = points.size();
+        url.append("locations=");
+        int size = points.size();
 
-		for (int i = 0; i < size; i++) {
-			url.append(points.get(i).getLatitude() + COMMA + points.get(i).getLongitude() + (i < (size - 1) ? PIPE : ""));
-		}
+        for (int i = 0; i < size; i++) {
+            url.append(points.get(i).getLatitude() + COMMA + points.get(i).getLongitude() + (i < (size - 1) ? PIPE : ""));
+        }
 
-		url.append("&sensor=false");
-		return url.toString();
-	}
+        url.append("&sensor=false");
+        return url.toString();
+    }
 }

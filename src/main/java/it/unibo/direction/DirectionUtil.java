@@ -10,20 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author Simone Rondelli - simone.rondelli2@studio.it.unibo.it
- *
  */
 public class DirectionUtil {
-	
-	public static List<GeoPoint> getAllRoutePoints(Route route) {
-		List<GeoPoint> points = new ArrayList<GeoPoint>();
-		for (Leg leg : route.getLegs()) {
-			for(Step step : leg.getSteps()) {
-				points.addAll(Polylines.decode(step.getPolyline()));
-			}
-		}
-		return points;
-	}
+
+    public static List<GeoPoint> getAllRoutePoints(Route route) {
+        List<GeoPoint> points = new ArrayList<GeoPoint>();
+        for (Leg leg : route.getLegs()) {
+            for (Step step : leg.getSteps()) {
+                points.addAll(Polylines.decode(step.getPolyline()));
+            }
+        }
+        return points;
+    }
 
 }

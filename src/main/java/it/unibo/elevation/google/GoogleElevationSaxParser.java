@@ -17,41 +17,41 @@ public class GoogleElevationSaxParser implements ElevationParser {
 
     private final SAXParser parser;
 
-	public GoogleElevationSaxParser() throws Exception {
+    public GoogleElevationSaxParser() throws Exception {
         this.parser = SAXParserFactory.newInstance().newSAXParser();
-	}
+    }
 
-	@Override
-	public double getElevation(InputStream is) throws Exception {
-		GoogleElevationHandler handler = new GoogleElevationHandler();
+    @Override
+    public double getElevation(InputStream is) throws Exception {
+        GoogleElevationHandler handler = new GoogleElevationHandler();
         this.parser.parse(is, handler);
-		return handler.getLastGeoPoint().getElevation();
-	}
+        return handler.getLastGeoPoint().getElevation();
+    }
 
-	@Override
-	public double[] getElevations(InputStream is) throws Exception {
-		GoogleElevationHandler handler = new GoogleElevationHandler();
+    @Override
+    public double[] getElevations(InputStream is) throws Exception {
+        GoogleElevationHandler handler = new GoogleElevationHandler();
         this.parser.parse(is, handler);
-		List<GeoPoint> geoPoints = handler.getGeoPoints();
-		double[] elevations = new double[geoPoints.size()];
-		for (int i = 0; i < elevations.length; i++) {
-			elevations[i] = geoPoints.get(i).getElevation();
-		}
-		return elevations;
-	}
+        List<GeoPoint> geoPoints = handler.getGeoPoints();
+        double[] elevations = new double[geoPoints.size()];
+        for (int i = 0; i < elevations.length; i++) {
+            elevations[i] = geoPoints.get(i).getElevation();
+        }
+        return elevations;
+    }
 
-	@Override
-	public GeoPoint getPoint(InputStream is) throws Exception {
-		GoogleElevationHandler handler = new GoogleElevationHandler();
+    @Override
+    public GeoPoint getPoint(InputStream is) throws Exception {
+        GoogleElevationHandler handler = new GoogleElevationHandler();
         this.parser.parse(is, handler);
-		return handler.getLastGeoPoint();
-	}
+        return handler.getLastGeoPoint();
+    }
 
-	@Override
-	public List<GeoPoint> getPoints(InputStream is) throws Exception {
-		GoogleElevationHandler handler = new GoogleElevationHandler();
+    @Override
+    public List<GeoPoint> getPoints(InputStream is) throws Exception {
+        GoogleElevationHandler handler = new GoogleElevationHandler();
         this.parser.parse(is, handler);
-		return handler.getGeoPoints();
-	}
+        return handler.getGeoPoints();
+    }
 
 }

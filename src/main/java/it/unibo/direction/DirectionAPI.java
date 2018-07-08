@@ -6,9 +6,7 @@ import it.unibo.entity.Route;
 import java.util.List;
 
 /**
- *
  * @author Simone Rondelli - simone.rondelli2@studio.it.unibo.it
- *
  */
 public interface DirectionAPI {
 

@@ -31,6 +31,6 @@ public class RealWorldType extends WorldType implements ICubicWorldType {
 
     @Override
     public IntRange calculateGenerationHeightRange(WorldServer world) {
-        return new IntRange(0, 8849); //one meter higher than everest
+        return new IntRange(0, Short.MAX_VALUE);
     }
 }
