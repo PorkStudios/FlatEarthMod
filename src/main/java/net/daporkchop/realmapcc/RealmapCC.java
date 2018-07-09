@@ -1,6 +1,7 @@
 package net.daporkchop.realmapcc;
 
 import net.minecraft.client.Minecraft;
+import net.minecraftforge.common.config.Config;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ProgressManager;
@@ -74,6 +75,8 @@ public class RealmapCC {
         //TODO: download map data
 
         ProgressManager.pop(progressBar);
+
+        System.out.println(this.getClass().getClassLoader().getClass().getCanonicalName());
     }
 
     @Mod.EventHandler
@@ -88,5 +91,14 @@ public class RealmapCC {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+    }
+
+    @Config(modid = MOD_ID)
+    public static class Conf {
+        @Config.Comment("The scale multiplier on the horizontal axes (X/Z)")
+        public static double scaleHoriz = 1.0d;
+
+        @Config.Comment("The scale multiplier for the vertical (Y) axis")
+        public static double scaleVert = 1.0d;
     }
 }

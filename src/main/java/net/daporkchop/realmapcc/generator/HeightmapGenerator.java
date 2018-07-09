@@ -1,54 +1,76 @@
 package net.daporkchop.realmapcc.generator;
 
-import it.unibo.elevation.ElevationAPI;
-import it.unibo.elevation.srtm.SrtmElevationAPI;
 import net.daporkchop.lib.db.DBBuilder;
 import net.daporkchop.lib.db.DatabaseFormat;
 import net.daporkchop.lib.db.PorkDB;
 import net.daporkchop.lib.encoding.compression.EnumCompression;
+import net.daporkchop.realmapcc.Constants;
+import net.daporkchop.realmapcc.data.CompactedHeightData;
 import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
-import net.daporkchop.realmapcc.util.RealWorldData;
-import net.daporkchop.realmapcc.util.RealWorldDataSerializer;
+import net.daporkchop.realmapcc.util.srtm.SrtmElevationAPI;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author DaPorkchop_
  */
 public class HeightmapGenerator {
-    public static void main(String... args) {
+    public static void main(String... args) throws Exception {
         File root = new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/");
-        ElevationAPI api = new SrtmElevationAPI(root, 1200);
-        PorkDB<ChunkPos, RealWorldData> db = new DBBuilder<ChunkPos, RealWorldData>()
+        int samples = Constants.width;
+        double sampleStep = 1.0d / (double) samples;
+        SrtmElevationAPI api = new SrtmElevationAPI(root, samples, false);
+        PorkDB<ChunkPos, CompactedHeightData> db = new DBBuilder<ChunkPos, CompactedHeightData>()
                 .setCompression(EnumCompression.GZIP)
+                .setForceOpen(true)
                 .setFormat(DatabaseFormat.ZIP_TREE)
                 .setKeyHasher(new KeyHasherChunkPos())
-                .setValueSerializer(new RealWorldDataSerializer())
+                .setValueSerializer(new CompactedHeightData.Serializer())
                 .setRootFolder(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/worldData"))
                 .build();
 
-        //SRTM sampled between 60°N and 56°S, so there's going to be a total of
+        {
+            System.out.println("Wiping existing database...");
+            Set<ChunkPos> toRemove = new HashSet<>();
+            db.forEach((k, v) -> toRemove.add(k));
+            toRemove.forEach(db::remove);
+            System.out.println("Done!");
+        }
 
-        /*int size = 1024;
-        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        for (int x = size - 1; x >= 0; x--) {
-            for (int y = size - 1; y >= 0; y--) {
-                //int col = MathHelper.clamp((int) (api.getElevation(x * 0.05d, y * 0.05d) / 20), 0, 255);
-                //image.setRGB(y, x ^ (size - 1), (col << 16) | (col << 8) | col);
-                int col = (int) (api.getElevation(x * 0.05d, y * 0.05d));
-                if (col < 0)    {
-                    col = 0xFF5555;
+        AtomicBoolean cont = new AtomicBoolean(true);
+
+        new Thread(() -> {
+            Scanner s = new Scanner(System.in);
+            s.nextLine();
+            s.close();
+            cont.set(false);
+        }).start();
+
+        short[] heights = new short[samples * samples];
+        for (int tileX = -56; cont.get() && tileX < 60; tileX++) {
+            for (int tileZ = -180; cont.get() && tileZ < 180; tileZ++) {
+                System.out.println("Processing tile at " + tileX + ',' + tileZ);
+                for (int x = 0; x < samples; x++) {
+                    for (int z = 0; z < samples; z++) {
+                        heights[x * samples + z] = (short) MathHelper.clamp(api.getElevation(
+                                tileX + x * sampleStep,
+                                tileZ + z * sampleStep), -1.0d, Short.MAX_VALUE);
+                    }
                 }
-                image.setRGB(y, x ^ (size - 1), 0xFF000000 | col);
+                api.getHelper().flushCache();
+
+                CompactedHeightData data = CompactedHeightData.getFrom(heights);
+                db.put(new ChunkPos(tileX, tileZ), data);
             }
         }
 
-        JFrame frame = new JFrame();
-        frame.getContentPane().setLayout(new FlowLayout());
-        frame.getContentPane().add(new JLabel(new ImageIcon(image)));
-        frame.pack();
-        frame.setVisible(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);*/
+        System.out.println("Complete!");
+        db.shutdown();
     }
 }

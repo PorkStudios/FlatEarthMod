@@ -10,8 +10,7 @@ import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.populator.CubePopulatorEvent;
-import it.unibo.elevation.ElevationAPI;
-import it.unibo.elevation.srtm.SrtmElevationAPI;
+import net.daporkchop.realmapcc.util.srtm.SrtmElevationAPI;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
@@ -36,18 +35,21 @@ import static net.daporkchop.realmapcc.Constants.space_between_blocks;
  */
 public class RealTerrainGenerator implements ICubeGenerator {
     private final World world;
-    private final ElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/"), 1200);
-    private final LoadingCache<ChunkPos, short[]> terrainData = CacheBuilder.newBuilder()
+    private final SrtmElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/"), Constants.width, true);
+    private final LoadingCache<ChunkPos, int[]> terrainData = CacheBuilder.newBuilder()
             .expireAfterAccess(10L, TimeUnit.MINUTES)
-            .build(new CacheLoader<ChunkPos, short[]>() {
+            .build(new CacheLoader<ChunkPos, int[]>() {
                 @Override
-                public short[] load(ChunkPos key) throws Exception {
-                    short[] s = new short[16 * 16];
+                public int[] load(ChunkPos key) throws Exception {
+                    int[] s = new int[16 * 16];
                     for (int x = 15; x >= 0; x--) {
                         for (int z = 15; z >= 0; z--) {
-                            s[(x << 4) | z] = (short) RealTerrainGenerator.this.api.getElevation(((key.x << 4) | x) * space_between_blocks, ((key.z << 4) | z) * space_between_blocks);
+                            s[(x << 4) | z] = (int) (RealTerrainGenerator.this.api.getElevation(
+                                    ((key.x << 4) | x) * space_between_blocks * RealmapCC.Conf.scaleHoriz,
+                                    ((key.z << 4) | z) * space_between_blocks * RealmapCC.Conf.scaleHoriz) * RealmapCC.Conf.scaleVert);
                         }
                     }
+                    RealTerrainGenerator.this.api.getHelper().flushCache();
                     return s;
                 }
             });
@@ -64,7 +66,7 @@ public class RealTerrainGenerator implements ICubeGenerator {
     @Override
     public CubePrimer generateCube(int cubeX, int cubeY, int cubeZ) {
         CubePrimer primer = new CubePrimer();
-        short[] heights = this.terrainData.getUnchecked(new ChunkPos(cubeX, cubeZ));
+        int[] heights = this.terrainData.getUnchecked(new ChunkPos(cubeX, cubeZ));
         IBlockState stone = Blocks.STONE.getDefaultState();
         for (int x = 15; x >= 0; x--) {
             for (int z = 15; z >= 0; z--) {
