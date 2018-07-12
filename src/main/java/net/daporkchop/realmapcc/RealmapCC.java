@@ -1,6 +1,14 @@
 package net.daporkchop.realmapcc;
 
+import net.daporkchop.lib.db.DBBuilder;
+import net.daporkchop.lib.db.DatabaseFormat;
+import net.daporkchop.lib.db.PorkDB;
+import net.daporkchop.lib.encoding.compression.EnumCompression;
+import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
+import net.daporkchop.realmapcc.util.RealWorldData;
+import net.daporkchop.realmapcc.util.RealWorldDataSerializer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -27,10 +35,10 @@ public class RealmapCC {
     @Mod.Instance(MOD_ID)
     public static RealmapCC INSTANCE;
 
-    //public static PorkDB<ChunkPos, RealWorldData> worldDataDB;
+    public static PorkDB<ChunkPos, RealWorldData> worldDataDB;
 
     static {
-        /*Runtime.getRuntime().addShutdownHook(
+        Runtime.getRuntime().addShutdownHook(
                 new Thread("Realmap World Data DB Closer Thread") {
                     @Override
                     public void run() {
@@ -39,7 +47,7 @@ public class RealmapCC {
                         }
                     }
                 }
-        );*/
+        );
     }
 
     public static File getWorkingFolder() {
@@ -62,14 +70,14 @@ public class RealmapCC {
         ProgressManager.ProgressBar progressBar = ProgressManager.push("Preparing world data", 2);
 
         progressBar.step("Opening database");
-        /*worldDataDB = new DBBuilder<ChunkPos, RealWorldData>()
+        worldDataDB = new DBBuilder<ChunkPos, RealWorldData>()
                 .setForceOpen(true)
-                .setCompression(EnumCompression.GZIP)
-                .setFormat(DatabaseFormat.ZIP_TREE)
+                .setCompression(EnumCompression.XZIP)
+                .setFormat(DatabaseFormat.TAR_TREE)
                 .setKeyHasher(new KeyHasherChunkPos())
                 .setValueSerializer(new RealWorldDataSerializer())
                 .setRootFolder(new File(getWorkingFolder(), "realMap/worldData"))
-                .build();*/
+                .build();
 
         progressBar.step("Fetching map data");
         //TODO: download map data

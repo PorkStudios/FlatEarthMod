@@ -4,11 +4,14 @@ import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.daporkchop.lib.binary.PorkBuf;
+import net.daporkchop.lib.binary.stream.StreamUtil;
 import net.daporkchop.lib.primitive.lambda.function.ObjectToBooleanFunction;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +19,8 @@ import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import static net.daporkchop.realmapcc.Constants.width;
 
 public class SrtmHelper {
 
@@ -54,7 +59,7 @@ public class SrtmHelper {
     }
 
     private static void copyInputStream(InputStream in, BufferedOutputStream out) throws IOException {
-        byte[] buffer = new byte[1024 * 1024];
+        byte[] buffer = new byte[1024];
         int len = in.read(buffer);
         while (len >= 0) {
             out.write(buffer, 0, len);
@@ -140,6 +145,50 @@ public class SrtmHelper {
         } else {
             return this.getValuesReal(fin, rowmin, colmin);
         }
+    }
+
+    public short[] getAllAt(int lat, int lon) throws IOException {
+        if (lat >= 60 || lat < -56 || lon > 180 || lon < -180) {
+            throw new IllegalArgumentException("Cannot get value outside of range!");
+        }
+        File file = SrtmUtil.getSrtmFileName(lat, lon, this.localDir);
+        if (!file.exists()) {
+            File zipped = new File(this.localDir, file.getName() + ".zip");
+            if (!zipped.exists()) {
+                return null;
+            }
+
+            ZipFile zipfile = new ZipFile(zipped, ZipFile.OPEN_READ);
+            System.out.println(file.getName());
+            ZipEntry entry = zipfile.getEntry(file.getName());
+            if (entry == null) {
+                entry = zipfile.getEntry(file.getName().toLowerCase());
+            }
+            InputStream inp = zipfile.getInputStream(entry);
+            BufferedOutputStream outp = new BufferedOutputStream(new FileOutputStream(file), 1024);
+
+            copyInputStream(inp, outp);
+            outp.flush();
+            zipfile.close();
+            zipped.deleteOnExit();
+        }
+
+        PorkBuf buf;
+        {
+            InputStream is = new FileInputStream(file);
+            byte[] readBuf = new byte[(int) file.length()];
+            StreamUtil.read(is, readBuf, 0, readBuf.length);
+            is.close();
+            buf = PorkBuf.wrap(readBuf);
+        }
+        short[] data = new short[width * width];
+        for (int x = width - 1; x >= 0; x--) {
+            for (int z = width - 1; z >= 0; z--) {
+                buf.seekRead(((this.samplesPerFile - z) * (this.samplesPerFile * 2 + 2)) + (x * 2));
+                data[x * width + z] = buf.getShort();
+            }
+        }
+        return data;
     }
 
     private double getValuesReal(File file, int rowmin, int colmin) throws IOException {

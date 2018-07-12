@@ -10,13 +10,7 @@ import java.text.NumberFormat;
  * @author Simone Rondelli - simone.rondelli2@studio.it.unibo.it
  */
 public class SrtmUtil {
-    public static final String EURASIA = "Eurasia";
-    public static final String AFRICA = "Africa";
-    public static final String ISLANDS = "Islands";
-    public static final String NORTH_AMERICA = "North_America";
-    public static final String SOUTH_AMERICA = "South_America";
     private static final Long2ObjectMap<File> files = new Long2ObjectOpenHashMap<>();
-    public static String SRTM3_URL = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
 
     /**
      * Return the SRTM file name without the extension
@@ -25,7 +19,7 @@ public class SrtmUtil {
      * @param lon Longitude
      * @return SRTM filename
      */
-    public static File getSrtmFileName(double lat, double lon, File localDir) {
+    public static synchronized File getSrtmFileName(double lat, double lon, File localDir) {
         long l = ((((int) lat) & 0xFFFFFFFFL) << 32L) | (((int) lon) & 0xFFFFFFFFL);
         if (files.containsKey(l)) {
             return files.get(l);

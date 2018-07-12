@@ -20,6 +20,10 @@ public class SrtmElevationAPI {
         return this.osmSrtm.srtmHeight(lat, lon);
     }
 
+    public short[] getElevations(int lat, int lon) throws IOException {
+        return this.osmSrtm.getAllAt(lat, lon);
+    }
+
     public SrtmHelper getHelper() {
         return this.osmSrtm;
     }
