@@ -1,6 +1,5 @@
 package net.daporkchop.realmapcc.generator;
 
-import net.daporkchop.lib.binary.stream.StreamUtil;
 import net.daporkchop.lib.db.DBBuilder;
 import net.daporkchop.lib.db.DatabaseFormat;
 import net.daporkchop.lib.db.PorkDB;
@@ -9,24 +8,21 @@ import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.CompactedHeightData;
 import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
 import net.daporkchop.realmapcc.util.srtm.SrtmElevationAPI;
+import net.daporkchop.realmapcc.util.srtm.SrtmElevationDB;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+
+import static net.daporkchop.lib.math.primitive.Floor.floorI;
 
 /**
  * @author DaPorkchop_
@@ -46,149 +42,100 @@ public class HeightmapGenerator {
             }).start();
         }
 
-        File root = new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/");
-
-        if (false) {
-            //debug: extract all zips
-
-            AtomicLong totalSize = new AtomicLong(0L);
-            AtomicInteger totalCount = new AtomicInteger(0);
-            AtomicLong compressedSize = new AtomicLong(0L);
-            File[] list = root.listFiles();
-            long startTime = System.currentTimeMillis();
-            for (int i = list.length - 1; cont.get() && i >= 0; i--) {
-                File file = list[i];
-                if (file.getName().endsWith(".zip")) {
-                    File target = new File(root, file.getName().replace(".zip", ""));
-                    if (target.exists()) {
-                        System.out.println("Skipping " + file.getName());
-                        continue;
-                    }
-                    ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
-                    ZipEntry entry = zipFile.getEntry(file.getName().replace(".zip", ""));
-                    if (entry == null) {
-                        entry = zipFile.getEntry(file.getName().toLowerCase());
-                    }
-                    if (entry == null) {
-                        entry = zipFile.entries().nextElement();
-                    }
-                    InputStream zin = zipFile.getInputStream(entry);
-                    System.out.println("Extracting " + file.getName() + " to " + target.getName() + "... (" + (list.length - i) + "/" + list.length + ")");
-
-                    byte[] buf = new byte[(int) entry.getSize()];
-                    StreamUtil.read(zin, buf, 0, buf.length);
-                    zin.close();
-
-                    target.createNewFile();
-                    FileOutputStream fos = new FileOutputStream(target);
-                    fos.write(buf);
-                    fos.close();
-
-                    totalSize.addAndGet(entry.getSize());
-                    compressedSize.addAndGet(entry.getCompressedSize());
-                    totalCount.incrementAndGet();
-
-                    //file.deleteOnExit();
-                }
-            }
-            startTime = System.currentTimeMillis() - startTime;
-            System.out.println("Processed " + totalCount.get() + " files in " + startTime + "ms (" + (startTime / 1000d / 60d / 60d) + " hrs)");
-            System.out.println("Written: " + totalSize.get());
-            System.out.println("Read (compressed): " + compressedSize.get());
-            return;
-        }
+        File root = new File(".", "../mapData/");
 
         int tiles = Constants.subtileCount;
         int samples = Constants.width;
         int tileSamples = samples / tiles;
-        double sampleStep = 1.0d / (double) samples;
 
-        SrtmElevationAPI api = new SrtmElevationAPI(root, samples, false);
+        SrtmElevationAPI api = new SrtmElevationAPI(new File(root, "actualData"), samples, false);
         PorkDB<ChunkPos, CompactedHeightData> db = new DBBuilder<ChunkPos, CompactedHeightData>()
-                .setCompression(EnumCompression.XZIP)
                 .setForceOpen(true)
-                .setFormat(DatabaseFormat.TAR_TREE)
-                .setKeyHasher(new KeyHasherChunkPos())
-                .setValueSerializer(new CompactedHeightData.Serializer())
-                .setRootFolder(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/worldData"))
+                .setMaxOpenFiles(256)
+                .setFormat(DatabaseFormat.TREE)
+                .setKeyHasher(KeyHasherChunkPos.instance)
+                .setValueSerializer(CompactedHeightData.serializer)
+                .setRootFolder(new File(root, "worldData"))
                 .build();
 
-        {
-            System.out.println("Wiping existing database...");
-            Set<ChunkPos> toRemove = new HashSet<>();
-            db.forEach((k, v) -> toRemove.add(k));
-            toRemove.forEach(db::remove);
-            System.out.println("Done!");
-        }
-
         if (false) {
-            short[] heights = new short[samples * samples];
-            for (int tileX = -56; cont.get() && tileX < 60; tileX++) {
-                for (int tileZ = -180; cont.get() && tileZ < 180; tileZ++) {
-                    System.out.println("Processing tile at " + tileX + ',' + tileZ);
-                    for (int x = 0; x < samples; x++) {
-                        for (int z = 0; z < samples; z++) {
-                            heights[x * samples + z] = (short) MathHelper.clamp(api.getElevation(
-                                    tileX + x * sampleStep,
-                                    tileZ + z * sampleStep), -1.0d, Short.MAX_VALUE);
-                        }
-                    }
-                    api.getHelper().flushCache();
-
-                    CompactedHeightData data = CompactedHeightData.getFrom(heights, samples);
-                    if (data != null) {
-                        db.put(new ChunkPos(tileX, tileZ), data);
-                    }
-                }
-            }
-        }
-
-        BlockingQueue<ChunkPos> queue = new LinkedBlockingQueue<>(4);
-        {
-            for (int i = 0; i < 4; i++) {
-                new Thread(() -> {
-                    short[] shrunk = new short[tileSamples * tileSamples];
-                    try {
-                        while (cont.get()) {
-                            ChunkPos pos = queue.poll(25L, TimeUnit.MILLISECONDS);
-                            if (pos != null) {
-                                short[] heights = api.getElevations(pos.x, pos.z);
-                                if (heights != null) {
-                                    System.out.println("(" + pos.x + ',' + pos.z + ')');
-                                    for (int x = 0; x < tiles; x++) {
-                                        for (int z = 0; z < tiles; z++) {
-                                            for (int X = 0; X < tileSamples; X++) {
-                                                for (int Z = 0; Z < tileSamples; Z++) {
-                                                    shrunk[X * tileSamples + Z] = heights[(x * tileSamples + X) * samples + z * tileSamples + z];
+            int cpuCores = Runtime.getRuntime().availableProcessors();
+            BlockingQueue<ChunkPos> queue = new LinkedBlockingQueue<>(cpuCores);
+            {
+                for (int i = cpuCores - 1; i >= 0; i--) {
+                    int j = i;
+                    new Thread(() -> {
+                        short[] shrunk = new short[tileSamples * tileSamples];
+                        try {
+                            System.out.println("Starting thread #" + j);
+                            while (cont.get()) {
+                                ChunkPos pos = queue.poll(1000L, TimeUnit.MILLISECONDS);
+                                if (pos != null) {
+                                    short[] heights = api.getElevations(pos.x, pos.z);
+                                    if (heights != null) {
+                                        System.out.println("(" + pos.x + ',' + pos.z + ')');
+                                        for (int x = 0; x < tiles; x++) {
+                                            for (int z = 0; z < tiles; z++) {
+                                                for (int X = 0; X < tileSamples; X++) {
+                                                    for (int Z = 0; Z < tileSamples; Z++) {
+                                                        shrunk[X * tileSamples + Z] = heights[(x * tileSamples + X) * samples + z * tileSamples + Z];
+                                                    }
                                                 }
-                                            }
-                                            CompactedHeightData data = CompactedHeightData.getFrom(shrunk, tileSamples);
-                                            if (data != null) {
-                                                db.put(new ChunkPos(pos.x * tiles + x, pos.z * tiles + z), data);
+                                                CompactedHeightData data = CompactedHeightData.getFrom(shrunk, tileSamples);
+                                                if (data != null) {
+                                                    db.put(new ChunkPos(pos.x * tiles + x, pos.z * tiles + z), data, EnumCompression.NONE);
+                                                }
+                                                //System.out.printf("Written %d°N, %d°E (tile %d,%d)\n", pos.x, pos.z, x, z);
                                             }
                                         }
                                     }
                                 }
                             }
+                        } catch (InterruptedException | IOException e) {
+                            e.printStackTrace();
                         }
-                    } catch (InterruptedException | IOException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
-            }
-        }
-        try {
-            //for (int tileX = -56; cont.get() && tileX < -48; tileX++) {
-            for (int tileX = -56; cont.get() && tileX < 60; tileX++) {
-                for (int tileZ = -180; cont.get() && tileZ < 180; tileZ++) {
-                    queue.put(new ChunkPos(tileX, tileZ));
+                    }).start();
                 }
             }
-        } catch (InterruptedException e) {
+            try {
+                for (int tileX = -56; cont.get() && tileX < -48; tileX++) {
+                    //for (int tileX = -56; cont.get() && tileX < 60; tileX++) {
+                    for (int tileZ = -180; cont.get() && tileZ < 180; tileZ++) {
+                        queue.put(new ChunkPos(tileX, tileZ));
+                    }
+                }
+            } catch (InterruptedException e) {
+            }
+
+            cont.set(false);
+            System.out.println("Complete!");
+            Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
         }
 
-        cont.set(false);
-        System.out.println("Complete!");
-        Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
+        if (true) {
+            int size = 512;
+            BufferedImage image = new BufferedImage(size, size--, BufferedImage.TYPE_INT_ARGB);
+            SrtmElevationDB apiDb = new SrtmElevationDB(db, samples, true);
+            System.out.println("Generating map...");
+            for (int x = size; x >= 0; x--) {
+                for (int z = size; z >= 0; z--) {
+                    //int X = x - 375;
+                    //int Z = z - 375;
+                    //X = ((X >> 2) << 2) | (Z & 3);
+                    //Z = ((Z >> 2) << 2) | ((x - 375) & 3);
+                    //image.setRGB(z, x ^ size, db.contains(new ChunkPos(x - 375, z - 375)) ? 0xFFFF5555 : 0xFF000000);
+                    //image.setRGB(z, x ^ size, 0xFF000000 | apiDb.getElevation(x * 0.02d - 56.0d, z * 0.02d - 80.0d));
+                    image.setRGB(z, x ^ size, 0xFF000000 | floorI(apiDb.getElevation(x * 0.03d - 56.0d, z * 0.03d - 76.0d) / 15.0d));
+                    //image.setRGB(z, x ^ size, 0xFF000000 | apiDb.getElevation(-52.4006819,-70.6573522));
+                }
+            }
+
+            JFrame frame = new JFrame();
+            frame.getContentPane().setLayout(new FlowLayout());
+            frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+            frame.pack();
+            frame.setVisible(true);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        }
     }
 }

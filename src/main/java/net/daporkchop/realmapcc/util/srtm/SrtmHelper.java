@@ -4,18 +4,17 @@ import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.daporkchop.lib.binary.PorkBuf;
-import net.daporkchop.lib.binary.stream.StreamUtil;
 import net.daporkchop.lib.primitive.lambda.function.ObjectToBooleanFunction;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -37,6 +36,8 @@ public class SrtmHelper {
     private final boolean interpolate;
     private final ObjectToBooleanFunction<File> existsFunc = File::exists;
     private final ObjectToBooleanFunction<File> zip_existsFunc;
+    private final ThreadLocal<short[]> wholeSectorHeightCache = ThreadLocal.withInitial(() -> new short[width * width]);
+    private final ThreadLocal<ByteBuffer> wholeSectorDataCache = ThreadLocal.withInitial(() -> ByteBuffer.allocateDirect(25934402));
 
     public SrtmHelper(File localDir, int samplesPerFile, boolean interpolate) {
         this.localDir = localDir;
@@ -173,19 +174,22 @@ public class SrtmHelper {
             zipped.deleteOnExit();
         }
 
-        PorkBuf buf;
+        ShortBuffer buf;
         {
-            InputStream is = new FileInputStream(file);
-            byte[] readBuf = new byte[(int) file.length()];
-            StreamUtil.read(is, readBuf, 0, readBuf.length);
-            is.close();
-            buf = PorkBuf.wrap(readBuf);
+            //InputStream is = new FileInputStream(file);
+            RandomAccessFile raf = new RandomAccessFile(file, "r");
+            ByteBuffer readBuf = this.wholeSectorDataCache.get();
+            //System.out.println(raf.getChannel().read(readBuf));
+            raf.getChannel().read(readBuf);
+            raf.close();
+            readBuf.rewind();
+            buf = ((ByteBuffer) readBuf.rewind()).asShortBuffer();
         }
-        short[] data = new short[width * width];
+        short[] data = this.wholeSectorHeightCache.get();
         for (int x = width - 1; x >= 0; x--) {
             for (int z = width - 1; z >= 0; z--) {
-                buf.seekRead(((this.samplesPerFile - z) * (this.samplesPerFile * 2 + 2)) + (x * 2));
-                data[x * width + z] = buf.getShort();
+                //buf.seekRead(((this.samplesPerFile - z) * (this.samplesPerFile * 2 + 2)) + (x * 2));
+                data[x * width + z] = buf.get((((this.samplesPerFile - z) * (this.samplesPerFile * 2 + 2)) + (x * 2)) >> 1);
             }
         }
         return data;

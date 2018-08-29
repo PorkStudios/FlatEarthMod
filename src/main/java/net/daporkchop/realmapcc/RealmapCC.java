@@ -3,10 +3,8 @@ package net.daporkchop.realmapcc;
 import net.daporkchop.lib.db.DBBuilder;
 import net.daporkchop.lib.db.DatabaseFormat;
 import net.daporkchop.lib.db.PorkDB;
-import net.daporkchop.lib.encoding.compression.EnumCompression;
+import net.daporkchop.realmapcc.data.CompactedHeightData;
 import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
-import net.daporkchop.realmapcc.util.RealWorldData;
-import net.daporkchop.realmapcc.util.RealWorldDataSerializer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.common.config.Config;
@@ -19,6 +17,8 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 @Mod(
         modid = RealmapCC.MOD_ID,
@@ -35,7 +35,7 @@ public class RealmapCC {
     @Mod.Instance(MOD_ID)
     public static RealmapCC INSTANCE;
 
-    public static PorkDB<ChunkPos, RealWorldData> worldDataDB;
+    public static PorkDB<ChunkPos, CompactedHeightData> worldDataDB;
 
     static {
         Runtime.getRuntime().addShutdownHook(
@@ -66,21 +66,28 @@ public class RealmapCC {
     }
 
     @Mod.EventHandler
-    public void construct(FMLConstructionEvent event) {
+    public void construct(FMLConstructionEvent event) throws MalformedURLException {
         ProgressManager.ProgressBar progressBar = ProgressManager.push("Preparing world data", 2);
 
+        progressBar.step("Fetching elevation data");
+        {
+            File rootData = new File(getWorkingFolder(), "realMap/worldData");
+            File dlComplete = new File(rootData, "comple.te");
+            if (!dlComplete.exists()) {
+                URL url = new URL("https://map.daporkchop.net/realWorld/map.zip");
+
+                //ProgressManager.ProgressBar dlBar = ProgressManager.push();
+            }
+        }
+
         progressBar.step("Opening database");
-        worldDataDB = new DBBuilder<ChunkPos, RealWorldData>()
+        worldDataDB = new DBBuilder<ChunkPos, CompactedHeightData>()
                 .setForceOpen(true)
-                .setCompression(EnumCompression.XZIP)
                 .setFormat(DatabaseFormat.TAR_TREE)
-                .setKeyHasher(new KeyHasherChunkPos())
-                .setValueSerializer(new RealWorldDataSerializer())
+                .setKeyHasher(KeyHasherChunkPos.instance)
+                .setValueSerializer(CompactedHeightData.serializer)
                 .setRootFolder(new File(getWorkingFolder(), "realMap/worldData"))
                 .build();
-
-        progressBar.step("Fetching map data");
-        //TODO: download map data
 
         ProgressManager.pop(progressBar);
 
