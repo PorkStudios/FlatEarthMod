@@ -35,8 +35,11 @@ public class SrtmHelperDB {
                             //System.out.println("found!");
                         }
                         return data;
-                    } catch (Throwable t) {
+                    } catch (NullPointerException t) {
                         return new EmptyCompactedHeightData();
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        return new EmptyCompactedHeightData();
+                        //throw new RuntimeException("Unable to get ChunkPos " + key);
                     }
                 }
             });
@@ -64,7 +67,7 @@ public class SrtmHelperDB {
         out.close();
     }
 
-    public int srtmHeight(double lat, double lon) throws IOException {
+    public int srtmHeight(double lat, double lon) {
         if (this.interpolate) {
             //double incr = 1.0d / (double) Constants.width;
             int v1 = this.getValue(lat, lon);
@@ -83,6 +86,9 @@ public class SrtmHelperDB {
         int relX = floorI((lat - floor(lat)) * Constants.width) % sections;
         int tileZ = floorI(lon * Constants.subtileCount);
         int relZ = floorI((lon - floor(lon)) * Constants.width) % sections;
+        int oldTileZ = tileZ;
+        tileZ = ((tileZ >> 4) << 4) | ((tileX & 0xF));
+        tileX = ((tileX >> 4) << 4) | ((oldTileZ & 0xF));
 
         //tileX = ((tileX >> 2) << 2) | (tileZ & 3);
         //tileZ = ((tileZ >> 2) << 2) | (xold & 3);
@@ -90,6 +96,7 @@ public class SrtmHelperDB {
         //System.out.println("tile: (" + tileX + ',' + tileZ + ')');
         //System.out.println("tile: (" + relX + ',' + relZ + ')');
         CompactedHeightData data = this.cachedHeights.getUnchecked(new ChunkPos(tileX, tileZ));
+        //return data instanceof EmptyCompactedHeightData ? 0xFF5555 : 0x55FF55;
         return data instanceof EmptyCompactedHeightData ? 0xFF5555 : data.getHeight(relZ, relX) / 15;
     }
 }

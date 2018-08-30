@@ -3,7 +3,6 @@ package net.daporkchop.realmapcc.generator;
 import net.daporkchop.lib.db.DBBuilder;
 import net.daporkchop.lib.db.DatabaseFormat;
 import net.daporkchop.lib.db.PorkDB;
-import net.daporkchop.lib.encoding.compression.EnumCompression;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.CompactedHeightData;
 import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
@@ -21,8 +20,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static net.daporkchop.lib.math.primitive.Floor.floorI;
 
 /**
  * @author DaPorkchop_
@@ -48,18 +45,18 @@ public class HeightmapGenerator {
         int samples = Constants.width;
         int tileSamples = samples / tiles;
 
+        int cpuCores = Runtime.getRuntime().availableProcessors();
         SrtmElevationAPI api = new SrtmElevationAPI(new File(root, "actualData"), samples, false);
         PorkDB<ChunkPos, CompactedHeightData> db = new DBBuilder<ChunkPos, CompactedHeightData>()
                 .setForceOpen(true)
-                .setMaxOpenFiles(256)
+                .setMaxOpenFiles(cpuCores)
                 .setFormat(DatabaseFormat.TREE)
                 .setKeyHasher(KeyHasherChunkPos.instance)
                 .setValueSerializer(CompactedHeightData.serializer)
                 .setRootFolder(new File(root, "worldData"))
                 .build();
 
-        if (false) {
-            int cpuCores = Runtime.getRuntime().availableProcessors();
+        if (true) {
             BlockingQueue<ChunkPos> queue = new LinkedBlockingQueue<>(cpuCores);
             {
                 for (int i = cpuCores - 1; i >= 0; i--) {
@@ -83,7 +80,7 @@ public class HeightmapGenerator {
                                                 }
                                                 CompactedHeightData data = CompactedHeightData.getFrom(shrunk, tileSamples);
                                                 if (data != null) {
-                                                    db.put(new ChunkPos(pos.x * tiles + x, pos.z * tiles + z), data, EnumCompression.NONE);
+                                                    db.put(new ChunkPos(pos.x * tiles + x, pos.z * tiles + z), data);
                                                 }
                                                 //System.out.printf("Written %d°N, %d°E (tile %d,%d)\n", pos.x, pos.z, x, z);
                                             }
@@ -125,7 +122,7 @@ public class HeightmapGenerator {
                     //Z = ((Z >> 2) << 2) | ((x - 375) & 3);
                     //image.setRGB(z, x ^ size, db.contains(new ChunkPos(x - 375, z - 375)) ? 0xFFFF5555 : 0xFF000000);
                     //image.setRGB(z, x ^ size, 0xFF000000 | apiDb.getElevation(x * 0.02d - 56.0d, z * 0.02d - 80.0d));
-                    image.setRGB(z, x ^ size, 0xFF000000 | floorI(apiDb.getElevation(x * 0.03d - 56.0d, z * 0.03d - 76.0d) / 15.0d));
+                    image.setRGB(z, x ^ size, 0xFF000000 | apiDb.getElevation(x * 0.03d - 56.0d, z * 0.03d - 76.0d));
                     //image.setRGB(z, x ^ size, 0xFF000000 | apiDb.getElevation(-52.4006819,-70.6573522));
                 }
             }
