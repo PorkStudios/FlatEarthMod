@@ -35,7 +35,7 @@ import static net.daporkchop.realmapcc.Constants.spaceBetweenBlocks;
  */
 public class RealTerrainGenerator implements ICubeGenerator {
     private final World world;
-    private final SrtmElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/"), Constants.srtmValuesPerDegree, true);
+    private final SrtmElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/"), Constants.SRTM_valuesPerDegree, true);
     private final LoadingCache<ChunkPos, int[]> terrainData = CacheBuilder.newBuilder()
             .expireAfterAccess(10L, TimeUnit.MINUTES)
             .build(new CacheLoader<ChunkPos, int[]>() {

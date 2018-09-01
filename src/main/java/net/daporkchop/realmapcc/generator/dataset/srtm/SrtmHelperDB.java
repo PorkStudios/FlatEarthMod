@@ -81,11 +81,11 @@ public class SrtmHelperDB {
     }
 
     private int getValue(double lat, double lon) {
-        int sections = Constants.srtmValuesPerDegree / Constants.srtmSubDegreeCount;
-        int tileX = floorI(lat * Constants.srtmSubDegreeCount);
-        int relX = floorI((lat - floor(lat)) * Constants.srtmValuesPerDegree) % sections;
-        int tileZ = floorI(lon * Constants.srtmSubDegreeCount);
-        int relZ = floorI((lon - floor(lon)) * Constants.srtmValuesPerDegree) % sections;
+        int sections = Constants.SRTM_valuesPerDegree / Constants.SRTM_subDegreeCount;
+        int tileX = floorI(lat * Constants.SRTM_subDegreeCount);
+        int relX = floorI((lat - floor(lat)) * Constants.SRTM_valuesPerDegree) % sections;
+        int tileZ = floorI(lon * Constants.SRTM_subDegreeCount);
+        int relZ = floorI((lon - floor(lon)) * Constants.SRTM_valuesPerDegree) % sections;
         int oldTileZ = tileZ;
         tileZ = ((tileZ >> 4) << 4) | ((tileX & 0xF));
         tileX = ((tileX >> 4) << 4) | ((oldTileZ & 0xF));

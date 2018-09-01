@@ -25,9 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author DaPorkchop_
  */
 public class HeightmapGenerator implements Constants {
-    public static final File root = new File(".", "../mapData/");
 
-    public static void main(String... args) throws Exception {
+    public static void main(String... args) {
         AtomicBoolean cont = new AtomicBoolean(true);
 
         {
@@ -41,19 +40,19 @@ public class HeightmapGenerator implements Constants {
             }).start();
         }
 
-        int tiles = srtmSubDegreeCount;
-        int samples = srtmValuesPerDegree;
+        int tiles = SRTM_subDegreeCount;
+        int samples = SRTM_valuesPerDegree;
         int tileSamples = samples / tiles;
 
         int cpuCores = Runtime.getRuntime().availableProcessors();
-        SrtmElevationAPI api = new SrtmElevationAPI(new File(root, "SRTMGL1"), samples, false);
+        SrtmElevationAPI api = new SrtmElevationAPI(new File(rootDir, "SRTMGL1"), samples, false);
         PorkDB<ChunkPos, CompactedHeightData> db = new DBBuilder<ChunkPos, CompactedHeightData>()
                 .setForceOpen(true)
                 .setMaxOpenFiles(cpuCores << 5)
                 .setFormat(DatabaseFormat.TREE)
                 .setKeyHasher(KeyHasherChunkPos.instance)
                 .setValueSerializer(CompactedHeightData.serializer)
-                .setRootFolder(new File(root, "worldData"))
+                .setRootFolder(new File(rootDir, "worldData"))
                 .build();
 
         if (cont.get() && true) {

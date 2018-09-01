@@ -1,4 +1,6 @@
-package net.daporkchop.realmapcc.generator;
+package net.daporkchop.realmapcc.generator.dataset.surface.cover;
+
+import net.daporkchop.lib.binary.util.RequiredBits;
 
 /**
  * Used for converting colors from GlobCover to biome data
@@ -23,7 +25,15 @@ public enum BiomeColor {
     SPARSE_VEGETATION(255, 235, 175),
     MIDDLE_BROADLEAVED_FOREST_FLOODED(0, 120, 90),
     CLOSED_SHRUBLAND_FLOODED(0, 150, 120),
-    MIDDLE_GRASSLAND_FLOODED(0, 220, 130),;
+    MIDDLE_GRASSLAND_FLOODED(0, 220, 130),
+    ARTIFICIAL(195, 20, 0),
+    BARREN(255, 245, 215),
+    WATER(0, 70, 200),
+    PERMANENT_SNOW_ICE(255, 255, 255),
+    NO_DATA(0, 0, 0);
+
+    public static final int numBiomes = values().length;
+    public static final int numBiomes_bits = RequiredBits.getNumBitsNeededFor(numBiomes);
 
     public final int color;
 
