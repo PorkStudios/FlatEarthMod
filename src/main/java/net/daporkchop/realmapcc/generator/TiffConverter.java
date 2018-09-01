@@ -2,6 +2,7 @@ package net.daporkchop.realmapcc.generator;
 
 
 import net.daporkchop.realmapcc.Constants;
+import net.daporkchop.realmapcc.util.MassiveBufferedImage;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingConstants;
@@ -64,7 +65,29 @@ public class TiffConverter implements Constants {
                 }).start();
             }
         }
-        if (true) { //debug: trim globcover tiff to only contain SRTM ranges
+        if (false) {
+            File in = new File(tiffRoot, "occurrence_90W_50N.tif");
+            BufferedImage image = getImageSection(in, 0, 0, 1000, 1000);
+            {
+                BufferedImage i2 = new MassiveBufferedImage(image.getWidth(), image.getHeight());
+                for (int x = image.getWidth() - 1; x >= 0; x--) {
+                    for (int y = image.getHeight() - 1; y >= 0; y--) {
+                        //int col = image.getRGB(x, y);
+                        //Color color = new Color(image.getRGB(x, y));
+                        //i2.setRGB(x, y, (color.getRed() >> 16) | (color.getGreen() >> 8) | color.getBlue());
+                        i2.setRGB(x, y, image.getRGB(x, y));
+                    }
+                }
+                System.out.println(i2.getRGB(430, 140));
+                image = i2;
+            }
+
+            //new File(rootDir, "tmp.tif").delete();
+            new File(rootDir, "tmp.png").delete();
+            //writeImage(image, new File(rootDir, "tmp.tif"), TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED);
+            writeImage(image, new File(rootDir, "tmp.png"));
+        }
+        if (false) { //debug: trim globcover tiff to only contain SRTM ranges
             File in = new File(rootDir, "GlobCover/globcover_colored.tif");
 
             if (false) { //debug.debug: get compression of globcover image so we can use it again for re-encoding
@@ -79,14 +102,29 @@ public class TiffConverter implements Constants {
                 throw new RuntimeException(String.format("Unable to delete %s", out.getAbsolutePath()));
             }
 
+            int yOffset = (GLOBCOVER_maxLatitude - maxLatitude) * GLOBCOVER_valuesPerDegree;
+            int width = 129_600;
+            int height = (abs(maxLatitude) + abs(minLatitude)) * GLOBCOVER_valuesPerDegree;
+            System.out.printf("Y offset: %d\nSize: %dx%d\n", yOffset, width, height);
+
+            System.out.println("Waiting 3 secs before malloc...");
+            try {
+                Thread.sleep(3000L);
+            } catch (InterruptedException e) {
+            }
+            System.out.println("Allocating buffer...");
+            BufferedImage image = new MassiveBufferedImage(width, height);
+
             System.out.println("Reading image...");
-            BufferedImage image = getImageSection(in,
-                    0,
-                    (GLOBCOVER_maxLatitude - maxLatitude) * GLOBCOVER_valuesPerDegree,
-                    129_600,
-                    (abs(maxLatitude) + abs(minLatitude)) * GLOBCOVER_valuesPerDegree
-            );
-            System.gc();
+            {
+                for (int y = height - 1; y >= 0; y--) {
+                    BufferedImage read = getImageSection(in, 0, y + yOffset, width, 1);
+                    for (int x = width - 1; x >= 0; x--) {
+                        image.setRGB(x, y, read.getRGB(x, 0));
+                    }
+                    System.out.printf("Row %d/%d\n", height - y, height);
+                }
+            }
 
             System.out.println("Writing image...");
             writeImage(image, out, TiffConstants.TIFF_COMPRESSION_LZW);
@@ -119,11 +157,15 @@ public class TiffConverter implements Constants {
     }
 
     public static void writeImage(BufferedImage image, File file) throws Exception {
-        writeImage(image, file, rangeParamsCache.get());
+        Map<String, Object> params = rangeParamsCache.get();
+        params.clear();
+        writeImage(image, file, params);
     }
 
     public static void writeImage(BufferedImage image, File file, int compression) throws Exception {
-        writeImage(image, file, rangeParamsCache.get(), compression);
+        Map<String, Object> params = rangeParamsCache.get();
+        params.clear();
+        writeImage(image, file, params, compression);
     }
 
     public static void writeImage(BufferedImage image, File file, Map<String, Object> params, int compression) throws Exception {
@@ -133,6 +175,12 @@ public class TiffConverter implements Constants {
     }
 
     public static void writeImage(BufferedImage image, File file, Map<String, Object> params) throws Exception {
+        /*OutputStream os1 = new FileOutputStream(file);
+        OutputStream os2 = new BufferedOutputStream(os1);
+        new TiffImageWriterLossless(new byte[0])   {
+        }.writeImage(image, os2, params);
+        os2.close();
+        os1.close();*/
         Imaging.writeImage(image, file, ImageFormats.TIFF, params);
     }
 }
