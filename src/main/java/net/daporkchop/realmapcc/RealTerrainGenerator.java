@@ -10,7 +10,7 @@ import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.populator.CubePopulatorEvent;
-import net.daporkchop.realmapcc.util.srtm.SrtmElevationAPI;
+import net.daporkchop.realmapcc.generator.dataset.srtm.SrtmElevationAPI;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
@@ -28,14 +28,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static net.daporkchop.realmapcc.Constants.space_between_blocks;
+import static net.daporkchop.realmapcc.Constants.spaceBetweenBlocks;
 
 /**
  * @author DaPorkchop_
  */
 public class RealTerrainGenerator implements ICubeGenerator {
     private final World world;
-    private final SrtmElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/"), Constants.width, true);
+    private final SrtmElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/actualData/"), Constants.srtmValuesPerDegree, true);
     private final LoadingCache<ChunkPos, int[]> terrainData = CacheBuilder.newBuilder()
             .expireAfterAccess(10L, TimeUnit.MINUTES)
             .build(new CacheLoader<ChunkPos, int[]>() {
@@ -45,8 +45,8 @@ public class RealTerrainGenerator implements ICubeGenerator {
                     for (int x = 15; x >= 0; x--) {
                         for (int z = 15; z >= 0; z--) {
                             s[(x << 4) | z] = (int) (RealTerrainGenerator.this.api.getElevation(
-                                    ((key.x << 4) | x) * space_between_blocks * RealmapCC.Conf.scaleHoriz,
-                                    ((key.z << 4) | z) * space_between_blocks * RealmapCC.Conf.scaleHoriz) * RealmapCC.Conf.scaleVert);
+                                    ((key.x << 4) | x) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz,
+                                    ((key.z << 4) | z) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz) * RealmapCC.Conf.scaleVert);
                         }
                     }
                     RealTerrainGenerator.this.api.getHelper().flushCache();

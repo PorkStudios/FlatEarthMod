@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc.util.srtm;
+package net.daporkchop.realmapcc.generator.dataset.srtm;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;

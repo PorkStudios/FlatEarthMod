@@ -5,9 +5,9 @@ import net.daporkchop.lib.db.DatabaseFormat;
 import net.daporkchop.lib.db.PorkDB;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.CompactedHeightData;
+import net.daporkchop.realmapcc.generator.dataset.srtm.SrtmElevationAPI;
+import net.daporkchop.realmapcc.generator.dataset.srtm.SrtmElevationDB;
 import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
-import net.daporkchop.realmapcc.util.srtm.SrtmElevationAPI;
-import net.daporkchop.realmapcc.util.srtm.SrtmElevationDB;
 import net.minecraft.util.math.ChunkPos;
 
 import javax.swing.*;
@@ -24,7 +24,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author DaPorkchop_
  */
-public class HeightmapGenerator {
+public class HeightmapGenerator implements Constants {
+    public static final File root = new File(".", "../mapData/");
+
     public static void main(String... args) throws Exception {
         AtomicBoolean cont = new AtomicBoolean(true);
 
@@ -39,24 +41,22 @@ public class HeightmapGenerator {
             }).start();
         }
 
-        File root = new File(".", "../mapData/");
-
-        int tiles = Constants.subtileCount;
-        int samples = Constants.width;
+        int tiles = srtmSubDegreeCount;
+        int samples = srtmValuesPerDegree;
         int tileSamples = samples / tiles;
 
         int cpuCores = Runtime.getRuntime().availableProcessors();
-        SrtmElevationAPI api = new SrtmElevationAPI(new File(root, "actualData"), samples, false);
+        SrtmElevationAPI api = new SrtmElevationAPI(new File(root, "SRTMGL1"), samples, false);
         PorkDB<ChunkPos, CompactedHeightData> db = new DBBuilder<ChunkPos, CompactedHeightData>()
                 .setForceOpen(true)
-                .setMaxOpenFiles(cpuCores)
+                .setMaxOpenFiles(cpuCores << 5)
                 .setFormat(DatabaseFormat.TREE)
                 .setKeyHasher(KeyHasherChunkPos.instance)
                 .setValueSerializer(CompactedHeightData.serializer)
                 .setRootFolder(new File(root, "worldData"))
                 .build();
 
-        if (true) {
+        if (cont.get() && true) {
             BlockingQueue<ChunkPos> queue = new LinkedBlockingQueue<>(cpuCores);
             {
                 for (int i = cpuCores - 1; i >= 0; i--) {
@@ -109,13 +109,13 @@ public class HeightmapGenerator {
             Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
         }
 
-        if (true) {
+        if (cont.get() && true) {
             int size = 512;
             BufferedImage image = new BufferedImage(size, size--, BufferedImage.TYPE_INT_ARGB);
             SrtmElevationDB apiDb = new SrtmElevationDB(db, samples, true);
             System.out.println("Generating map...");
-            for (int x = size; x >= 0; x--) {
-                for (int z = size; z >= 0; z--) {
+            for (int x = size; cont.get() && x >= 0; x--) {
+                for (int z = size; cont.get() && z >= 0; z--) {
                     //int X = x - 375;
                     //int Z = z - 375;
                     //X = ((X >> 2) << 2) | (Z & 3);
@@ -125,6 +125,7 @@ public class HeightmapGenerator {
                     image.setRGB(z, x ^ size, 0xFF000000 | apiDb.getElevation(x * 0.03d - 56.0d, z * 0.03d - 76.0d));
                     //image.setRGB(z, x ^ size, 0xFF000000 | apiDb.getElevation(-52.4006819,-70.6573522));
                 }
+                System.out.printf("Row %d/%d\n", size - x, size + 1);
             }
 
             JFrame frame = new JFrame();

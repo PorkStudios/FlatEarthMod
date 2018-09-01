@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc.util.srtm;
+package net.daporkchop.realmapcc.generator.dataset.srtm;
 
 import java.io.File;
 import java.io.IOException;

@@ -70,11 +70,11 @@ public class CompactedHeightData {
                 throw new IllegalArgumentException();
             }
             out.writeShort(value.baseHeight);
-            out.writeInt(value.width);
+            out.writeShort((short) value.width);
             out.writeByte((byte) (value.array == null ? 0 : 1));
             if (value.array != null) {
                 out.writeInt(value.array.getData().length);
-                out.writeInt(value.array.getBitsPer());
+                out.writeByte((byte) value.array.getBitsPer());
                 for (long l : value.array.getData()) {
                     out.writeLong(l);
                 }
@@ -84,13 +84,13 @@ public class CompactedHeightData {
         @Override
         public CompactedHeightData read(DataIn in) throws IOException {
             short baseHeight = in.readShort();
-            int width = in.readInt();
+            int width = in.readShort() & 0xFFFF;
             byte flags = in.readByte();
 
             NBitArray array = null;
             if (flags == 1) {
                 long[] l = new long[in.readInt()];
-                array = new NBitArray(l, in.readInt());
+                array = new NBitArray(l, in.readByte() & 0xFF);
                 for (int i = 0; i < l.length; i++) {
                     l[i] = in.readInt();
                 }

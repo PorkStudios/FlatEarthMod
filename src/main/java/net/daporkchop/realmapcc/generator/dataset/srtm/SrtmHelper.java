@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc.util.srtm;
+package net.daporkchop.realmapcc.generator.dataset.srtm;
 
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static net.daporkchop.realmapcc.Constants.width;
+import static net.daporkchop.realmapcc.Constants.srtmValuesPerDegree;
 
 public class SrtmHelper {
 
@@ -36,7 +36,7 @@ public class SrtmHelper {
     private final boolean interpolate;
     private final ObjectToBooleanFunction<File> existsFunc = File::exists;
     private final ObjectToBooleanFunction<File> zip_existsFunc;
-    private final ThreadLocal<short[]> wholeSectorHeightCache = ThreadLocal.withInitial(() -> new short[width * width]);
+    private final ThreadLocal<short[]> wholeSectorHeightCache = ThreadLocal.withInitial(() -> new short[srtmValuesPerDegree * srtmValuesPerDegree]);
     private final ThreadLocal<ByteBuffer> wholeSectorDataCache = ThreadLocal.withInitial(() -> ByteBuffer.allocateDirect(25934402));
 
     public SrtmHelper(File localDir, int samplesPerFile, boolean interpolate) {
@@ -186,10 +186,10 @@ public class SrtmHelper {
             buf = ((ByteBuffer) readBuf.rewind()).asShortBuffer();
         }
         short[] data = this.wholeSectorHeightCache.get();
-        for (int x = width - 1; x >= 0; x--) {
-            for (int z = width - 1; z >= 0; z--) {
+        for (int x = srtmValuesPerDegree - 1; x >= 0; x--) {
+            for (int z = srtmValuesPerDegree - 1; z >= 0; z--) {
                 //buf.seekRead(((this.samplesPerFile - z) * (this.samplesPerFile * 2 + 2)) + (x * 2));
-                data[x * width + z] = buf.get((((this.samplesPerFile - z) * (this.samplesPerFile * 2 + 2)) + (x * 2)) >> 1);
+                data[x * srtmValuesPerDegree + z] = buf.get((((this.samplesPerFile - z) * (this.samplesPerFile * 2 + 2)) + (x * 2)) >> 1);
             }
         }
         return data;

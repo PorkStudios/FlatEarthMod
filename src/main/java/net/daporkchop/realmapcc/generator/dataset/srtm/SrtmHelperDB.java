@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc.util.srtm;
+package net.daporkchop.realmapcc.generator.dataset.srtm;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -81,11 +81,11 @@ public class SrtmHelperDB {
     }
 
     private int getValue(double lat, double lon) {
-        int sections = Constants.width / Constants.subtileCount;
-        int tileX = floorI(lat * Constants.subtileCount);
-        int relX = floorI((lat - floor(lat)) * Constants.width) % sections;
-        int tileZ = floorI(lon * Constants.subtileCount);
-        int relZ = floorI((lon - floor(lon)) * Constants.width) % sections;
+        int sections = Constants.srtmValuesPerDegree / Constants.srtmSubDegreeCount;
+        int tileX = floorI(lat * Constants.srtmSubDegreeCount);
+        int relX = floorI((lat - floor(lat)) * Constants.srtmValuesPerDegree) % sections;
+        int tileZ = floorI(lon * Constants.srtmSubDegreeCount);
+        int relZ = floorI((lon - floor(lon)) * Constants.srtmValuesPerDegree) % sections;
         int oldTileZ = tileZ;
         tileZ = ((tileZ >> 4) << 4) | ((tileX & 0xF));
         tileX = ((tileX >> 4) << 4) | ((oldTileZ & 0xF));

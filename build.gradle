@@ -40,11 +40,22 @@ repositories {
         name = "DaPorkchop_"
         url = "https://maven.daporkchop.net/"
     }
+    /*maven {
+        name = "ImageJ Public"
+        url = "http://maven.imagej.net/content/repositories/public/"
+    }*/
+    maven {
+        name = "Apache Development Snapshot Repository"
+        url = "https://repository.apache.org/content/repositories/snapshots/"
+    }
 }
 
 dependencies {
     //compileOnly "io.github.opencubicchunks:cubicworldgen:1.12.2-0.0.8.0-SNAPSHOT"
     compileOnly "io.github.opencubicchunks:cubicchunks-api:1.12.2-0.0.15.0-SNAPSHOT"
+
+    //compile group: 'org.apache.commons', name: 'commons-imaging', version: '1.0' //should not be included in dependencies
+    compile "org.apache.commons:commons-imaging:1.0-SNAPSHOT"
 
     compile "net.daporkchop.lib:db:0.1.4"
     compile "net.daporkchop.lib:primitive:0.0.6"
