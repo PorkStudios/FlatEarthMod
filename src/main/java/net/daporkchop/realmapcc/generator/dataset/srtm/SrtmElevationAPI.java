@@ -3,6 +3,7 @@ package net.daporkchop.realmapcc.generator.dataset.srtm;
 import java.io.File;
 import java.io.IOException;
 
+@Deprecated
 public class SrtmElevationAPI {
 
     private final SrtmHelper osmSrtm;
@@ -17,7 +18,7 @@ public class SrtmElevationAPI {
     }
 
     public double getElevation(double lat, double lon) throws IOException {
-        return this.osmSrtm.srtmHeight(lat, lon);
+        return this.osmSrtm.getElevation(lat, lon);
     }
 
     public short[] getElevations(int lat, int lon) throws IOException {

@@ -1,21 +1,21 @@
 package net.daporkchop.realmapcc.generator;
 
 
+import net.daporkchop.lib.binary.NBitArray;
 import net.daporkchop.realmapcc.Constants;
+import net.daporkchop.realmapcc.generator.dataset.surface.cover.BiomeColor;
+import net.daporkchop.realmapcc.generator.dataset.surface.cover.GlobCover;
+import net.daporkchop.realmapcc.util.ImageUtil;
 import net.daporkchop.realmapcc.util.MassiveBufferedImage;
-import org.apache.commons.imaging.ImageFormats;
-import org.apache.commons.imaging.Imaging;
-import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.TiffImageParser;
 import org.apache.commons.imaging.formats.tiff.constants.TiffConstants;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import static java.lang.Math.abs;
 
@@ -26,13 +26,11 @@ public class TiffConverter implements Constants {
     public static final File conversionRoot = new File(rootDir, "tifConversion");
     public static final File tiffRoot = new File(conversionRoot, "tif");
     public static final File pngRoot = new File(conversionRoot, "png");
-    public static final ThreadLocal<TiffImageParser> parserCache = ThreadLocal.withInitial(TiffImageParser::new);
-    private static final ThreadLocal<Map<String, Object>> rangeParamsCache = ThreadLocal.withInitial(HashMap::new);
 
     public static void main(String... args) throws Exception {
         if (false) { //debug: print all tiff resolutions (doesn't seem to work)
             for (File file : tiffRoot.listFiles()) {
-                TiffImageParser parser = parserCache.get();
+                TiffImageParser parser = ImageUtil.parserCache.get();
                 Dimension dimension = parser.getImageSize(file);
                 System.out.printf("Image %s: Res %dx%d\n", file.getName(), dimension.width, dimension.height);
             }
@@ -55,7 +53,7 @@ public class TiffConverter implements Constants {
                             for (int y = 0; y < 40; y++) {
                                 int X = x + j * 10;
                                 System.out.printf("Reading tile at %d,%d\n", X, y);
-                                BufferedImage image = getImageSection(file, X * 1000, y * 1000, 1000, 1000);
+                                BufferedImage image = ImageUtil.getImageSection(file, X * 1000, y * 1000, 1000, 1000);
                                 ImageIO.write(image, "png", new File(pngRoot, String.format("%d_%d.png", X, y))); //hehe i did this wrong
                             }
                         }
@@ -67,7 +65,7 @@ public class TiffConverter implements Constants {
         }
         if (false) {
             File in = new File(tiffRoot, "occurrence_90W_50N.tif");
-            BufferedImage image = getImageSection(in, 0, 0, 1000, 1000);
+            BufferedImage image = ImageUtil.getImageSection(in, 0, 0, 1000, 1000);
             {
                 BufferedImage i2 = new MassiveBufferedImage(image.getWidth(), image.getHeight());
                 for (int x = image.getWidth() - 1; x >= 0; x--) {
@@ -85,13 +83,13 @@ public class TiffConverter implements Constants {
             //new File(rootDir, "tmp.tif").delete();
             new File(rootDir, "tmp.png").delete();
             //writeImage(image, new File(rootDir, "tmp.tif"), TiffConstants.TIFF_COMPRESSION_UNCOMPRESSED);
-            writeImage(image, new File(rootDir, "tmp.png"));
+            ImageUtil.writeImage(image, new File(rootDir, "tmp.png"));
         }
         if (false) { //debug: trim globcover tiff to only contain SRTM ranges
             File in = new File(rootDir, "GlobCover/globcover_colored.tif");
 
             if (false) { //debug.debug: get compression of globcover image so we can use it again for re-encoding
-                TiffImageMetadata metadata = (TiffImageMetadata) parserCache.get().getMetadata(in);
+                TiffImageMetadata metadata = (TiffImageMetadata) ImageUtil.parserCache.get().getMetadata(in);
                 System.out.println(metadata);
                 return;
             }
@@ -118,7 +116,7 @@ public class TiffConverter implements Constants {
             System.out.println("Reading image...");
             {
                 for (int y = height - 1; y >= 0; y--) {
-                    BufferedImage read = getImageSection(in, 0, y + yOffset, width, 1);
+                    BufferedImage read = ImageUtil.getImageSection(in, 0, y + yOffset, width, 1);
                     for (int x = width - 1; x >= 0; x--) {
                         image.setRGB(x, y, read.getRGB(x, 0));
                     }
@@ -127,60 +125,52 @@ public class TiffConverter implements Constants {
             }
 
             System.out.println("Writing image...");
-            writeImage(image, out, TiffConstants.TIFF_COMPRESSION_LZW);
+            ImageUtil.writeImage(image, out, TiffConstants.TIFF_COMPRESSION_LZW);
 
             System.out.println("Done!");
         }
-    }
+        if (false) { //debug: test viewing image segment
+            File file = GlobCover.globCoverPath;
+            int lat = 50;
+            int lon = -90;
+            int degSize = 10 * GLOBCOVER_valuesPerDegree;
+            BufferedImage segment = ImageUtil.getImageSection(
+                    file,
+                    (lon - minLongitude) * GLOBCOVER_valuesPerDegree,
+                    (maxLatitude - lat) * GLOBCOVER_valuesPerDegree,
+                    degSize, degSize
+            );
 
-    public static BufferedImage getImageSection(File file, int x, int y, int width, int height) throws Exception {
-        return getImageSection(file, x, y, width, height, parserCache.get(), rangeParamsCache.get());
-    }
-
-    public static BufferedImage getImageSection(File file, int x, int y, int width, int height, Map<String, Object> params) throws Exception {
-        return getImageSection(file, x, y, width, height, parserCache.get(), params);
-    }
-
-    public static BufferedImage getImageSection(File file, int x, int y, int width, int height, TiffImageParser parser) throws Exception {
-        return getImageSection(file, x, y, width, height, parser, rangeParamsCache.get());
-    }
-
-    public static BufferedImage getImageSection(File file, int x, int y, int width, int height, TiffImageParser parser, Map<String, Object> params) throws Exception {
-        {
-            params.clear();
-            params.put(TiffConstants.PARAM_KEY_SUBIMAGE_X, x);
-            params.put(TiffConstants.PARAM_KEY_SUBIMAGE_Y, y);
-            params.put(TiffConstants.PARAM_KEY_SUBIMAGE_WIDTH, width);
-            params.put(TiffConstants.PARAM_KEY_SUBIMAGE_HEIGHT, height);
+            if (false) {
+                JFrame frame = new JFrame();
+                frame.getContentPane().setLayout(new FlowLayout());
+                frame.getContentPane().add(new JLabel(new ImageIcon(segment)));
+                frame.pack();
+                frame.setVisible(true);
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            }
+            File out = new File(rootDir, "tmp.tif");
+            if (out.exists() && !out.delete()) {
+                throw new RuntimeException();
+            }
+            ImageUtil.writeImage(segment, out);
         }
-        return parser.getBufferedImage(file, params);
-    }
-
-    public static void writeImage(BufferedImage image, File file) throws Exception {
-        Map<String, Object> params = rangeParamsCache.get();
-        params.clear();
-        writeImage(image, file, params);
-    }
-
-    public static void writeImage(BufferedImage image, File file, int compression) throws Exception {
-        Map<String, Object> params = rangeParamsCache.get();
-        params.clear();
-        writeImage(image, file, params, compression);
-    }
-
-    public static void writeImage(BufferedImage image, File file, Map<String, Object> params, int compression) throws Exception {
-        params.clear();
-        params.put(ImagingConstants.PARAM_KEY_COMPRESSION, compression);
-        writeImage(image, file, params);
-    }
-
-    public static void writeImage(BufferedImage image, File file, Map<String, Object> params) throws Exception {
-        /*OutputStream os1 = new FileOutputStream(file);
-        OutputStream os2 = new BufferedOutputStream(os1);
-        new TiffImageWriterLossless(new byte[0])   {
-        }.writeImage(image, os2, params);
-        os2.close();
-        os1.close();*/
-        Imaging.writeImage(image, file, ImageFormats.TIFF, params);
+        if (true) { //debug: test viewing single degree
+            NBitArray array = GlobCover.INSTANCE.getDataAtDegree(-90, 50);
+            BufferedImage image = new BufferedImage(GLOBCOVER_valuesPerDegree, GLOBCOVER_valuesPerDegree, BufferedImage.TYPE_INT_ARGB);
+            for (int x = GLOBCOVER_valuesPerDegree - 1; x >= 0; x--) {
+                for (int y = GLOBCOVER_valuesPerDegree - 1; y >= 0; y--) {
+                    image.setRGB(x, y, BiomeColor.values()[array.get(x * GLOBCOVER_valuesPerDegree + y)].color | 0xFF000000);
+                }
+            }
+            if (true) {
+                JFrame frame = new JFrame();
+                frame.getContentPane().setLayout(new FlowLayout());
+                frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+                frame.pack();
+                frame.setVisible(true);
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            }
+        }
     }
 }

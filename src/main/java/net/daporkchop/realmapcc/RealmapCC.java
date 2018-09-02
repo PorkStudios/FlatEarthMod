@@ -26,7 +26,7 @@ import java.net.URL;
         version = RealmapCC.VERSION/*,
         dependencies = "required-after:cubicgen"*/
 )
-public class RealmapCC {
+public class RealmapCC implements Constants {
 
     public static final String MOD_ID = "realmapcc";
     public static final String MOD_NAME = "Realmap - Cubic Chunks";
@@ -83,10 +83,11 @@ public class RealmapCC {
         progressBar.step("Opening database");
         worldDataDB = new DBBuilder<ChunkPos, CompactedHeightData>()
                 .setForceOpen(true)
-                .setFormat(DatabaseFormat.TAR_TREE)
+                .setFormat(DatabaseFormat.TREE)
                 .setKeyHasher(KeyHasherChunkPos.instance)
                 .setValueSerializer(CompactedHeightData.serializer)
-                .setRootFolder(new File(getWorkingFolder(), "realMap/worldData"))
+                //.setRootFolder(new File(getWorkingFolder(), "realMap/worldData"))
+                .setRootFolder(new File(rootDir, "worldData"))
                 .build();
 
         ProgressManager.pop(progressBar);

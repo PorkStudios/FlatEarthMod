@@ -1,5 +1,7 @@
 package net.daporkchop.realmapcc.generator.dataset.surface.cover;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.daporkchop.lib.binary.util.RequiredBits;
 
 /**
@@ -7,6 +9,7 @@ import net.daporkchop.lib.binary.util.RequiredBits;
  *
  * @author DaPorkchop_
  */
+//TODO: actually add biome mappings
 public enum BiomeColor {
     IRRIGATED_CROPLANDS(170, 240, 240),
     RAINFED_CROPLANDS(255, 255, 100),
@@ -34,10 +37,21 @@ public enum BiomeColor {
 
     public static final int numBiomes = values().length;
     public static final int numBiomes_bits = RequiredBits.getNumBitsNeededFor(numBiomes);
+    private static final Int2ObjectMap<BiomeColor> colorToBiome = new Int2ObjectOpenHashMap<>();
+
+    static {
+        for (BiomeColor val : values()) {
+            colorToBiome.put(val.color, val);
+        }
+    }
 
     public final int color;
 
     BiomeColor(int r, int g, int b) {
         this.color = ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
+    }
+
+    public static BiomeColor getBiomeFromColor(int color) {
+        return colorToBiome.getOrDefault(color & 0x00FFFFFF, NO_DATA);
     }
 }

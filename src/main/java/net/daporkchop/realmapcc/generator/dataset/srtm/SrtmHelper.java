@@ -91,7 +91,7 @@ public class SrtmHelper {
      * @return srtm height or Double.NaN if something is wrong
      * @throws IOException
      */
-    public double srtmHeight(double lat, double lon) throws IOException {
+    public double getElevation(double lat, double lon) throws IOException {
         if (this.interpolate) {
             File file = SrtmUtil.getSrtmFileName(lat, lon, this.localDir);
 
