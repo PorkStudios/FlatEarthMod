@@ -14,7 +14,7 @@ public class SrtmElevationDB {
     }
 
     public int getElevation(double lat, double lon) {
-        return this.osmSrtm.getElevation(lat, lon);
+        return this.osmSrtm.getDataAtPos(lat, lon);
     }
 
     public SrtmHelperDB getHelper() {

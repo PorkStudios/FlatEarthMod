@@ -111,7 +111,7 @@ public class HeightmapGenerator implements Constants {
         if (cont.get() && true) {
             int size = 512;
             BufferedImage image = new BufferedImage(size, size--, BufferedImage.TYPE_INT_ARGB);
-            SrtmElevationDB apiDb = new SrtmElevationDB(db, samples, true);
+            SrtmElevationDB apiDb = new SrtmElevationDB(db);
             System.out.println("Generating map...");
             for (int x = size; cont.get() && x >= 0; x--) {
                 for (int z = size; cont.get() && z >= 0; z--) {
@@ -133,6 +133,41 @@ public class HeightmapGenerator implements Constants {
             frame.pack();
             frame.setVisible(true);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        }
+    }
+
+    public static void tryConvert(ChunkPos pos, PorkDB<ChunkPos, CompactedHeightData> db) {
+        int tiles = SRTM_subDegreeCount;
+        int samples = SRTM_valuesPerDegree;
+        int tileSamples = samples / tiles;
+
+        SrtmElevationAPI api = new SrtmElevationAPI(new File(rootDir, "SRTMGL1"), samples, false);
+
+        short[] shrunk = new short[tileSamples * tileSamples];
+        try {
+            if (pos != null) {
+                short[] heights = api.getElevations(pos.x, pos.z);
+                if (heights != null) {
+                    System.out.println("(" + pos.x + ',' + pos.z + ')');
+                    for (int x = 0; x < tiles; x++) {
+                        for (int z = 0; z < tiles; z++) {
+                            for (int X = 0; X < tileSamples; X++) {
+                                for (int Z = 0; Z < tileSamples; Z++) {
+                                    shrunk[X * tileSamples + Z] = heights[(x * tileSamples + X) * samples + z * tileSamples + Z];
+                                }
+                            }
+                            CompactedHeightData data = CompactedHeightData.getFrom(shrunk, tileSamples);
+                            if (data != null) {
+                                db.put(new ChunkPos(pos.x * tiles + x, pos.z * tiles + z), data);
+                            }
+                            //System.out.printf("Written %d°N, %d°E (tile %d,%d)\n", pos.x, pos.z, x, z);
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
         }
     }
 }

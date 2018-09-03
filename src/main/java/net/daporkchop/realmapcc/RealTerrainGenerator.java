@@ -20,7 +20,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
-import org.apache.commons.math3.analysis.interpolation.PiecewiseBicubicSplineInterpolatingFunction;
+import org.apache.commons.math3.analysis.BivariateFunction;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -32,12 +32,6 @@ import java.util.concurrent.TimeUnit;
  * @author DaPorkchop_
  */
 public class RealTerrainGenerator implements ICubeGenerator, Constants {
-    private static final ThreadLocal<Object[]> interpolateCache = ThreadLocal.withInitial(() -> new Object[]{
-            new double[5],
-            new double[5],
-            new double[5][5],
-    });
-
     private final World world;
     //private final SrtmElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/SRTMGL1/"), SRTM_valuesPerDegree, true);
     private final SrtmHelperDB api = new SrtmHelperDB(RealmapCC.worldDataDB);
@@ -46,28 +40,36 @@ public class RealTerrainGenerator implements ICubeGenerator, Constants {
             .build(new CacheLoader<ChunkPos, short[]>() {
                 @Override
                 public short[] load(ChunkPos key) {
-                    PiecewiseBicubicSplineInterpolatingFunction function;
-                    {
-                        Object[] a = interpolateCache.get();
-                        double[] xPositions = (double[]) a[0];
-                        double[] yPositions = (double[]) a[1];
-                        double[][] values = (double[][]) a[2];
-                        for (int x = -2; x < 3; x++) {
-                            xPositions[x + 2] = (((key.x << 4) * spaceBetweenChunks) * RealmapCC.Conf.scaleHoriz);
-                            for (int z = -2; z < 3; z++) {
-
+                    short[] s = new short[16 * 16];
+                    try {
+                        BivariateFunction function = RealTerrainGenerator.this.api.getInterpolatedData(
+                                (key.z << 4) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                                (key.x << 4) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                                16 * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                                16 * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz
+                        );
+                        if (function == null) {
+                            throw new NullPointerException();
+                        }
+                        for (int x = 15; x >= 0; x--) {
+                            for (int z = 15; z >= 0; z--) {
+                                s[(x << 4) | z] = (short) (
+                                        function.value(
+                                                ((key.x << 4) | x) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                                                ((key.z << 4) | z) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz
+                                        ) * RealmapCC.Conf.scaleVert
+                                );
+                            /*s[(x << 4) | z] = (short) (
+                                    RealTerrainGenerator.this.api.getDataAtPos(
+                                            ((key.x << 4) | x) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz,
+                                            ((key.z << 4) | z) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz
+                                    ) * RealmapCC.Conf.scaleVert
+                            );*/
                             }
                         }
+                    } catch (Throwable t) {
+                        //t.printStackTrace();
                     }
-                    short[] s = new short[16 * 16];
-                    for (int x = 15; x >= 0; x--) {
-                        for (int z = 15; z >= 0; z--) {
-                            s[(x << 4) | z] = (short) (RealTerrainGenerator.this.api.getElevation(
-                                    ((key.x << 4) | x) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz,
-                                    ((key.z << 4) | z) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz) * RealmapCC.Conf.scaleVert);
-                        }
-                    }
-                    //RealTerrainGenerator.this.api.flushCache();
                     return s;
                 }
             });
@@ -83,6 +85,8 @@ public class RealTerrainGenerator implements ICubeGenerator, Constants {
 
     @Override
     public CubePrimer generateCube(int cubeX, int cubeY, int cubeZ) {
+        //this.terrainData.invalidateAll();
+
         CubePrimer primer = new CubePrimer();
         short[] heights = this.terrainData.getUnchecked(new ChunkPos(cubeX, cubeZ));
         IBlockState stone = Blocks.STONE.getDefaultState();

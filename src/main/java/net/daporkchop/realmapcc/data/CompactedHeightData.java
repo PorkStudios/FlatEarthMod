@@ -92,7 +92,7 @@ public class CompactedHeightData {
                 long[] l = new long[in.readInt()];
                 array = new NBitArray(l, in.readByte() & 0xFF);
                 for (int i = 0; i < l.length; i++) {
-                    l[i] = in.readInt();
+                    l[i] = in.readLong();
                 }
             }
             return new CompactedHeightData(baseHeight, array, width);

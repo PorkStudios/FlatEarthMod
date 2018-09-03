@@ -1,5 +1,6 @@
 package net.daporkchop.realmapcc;
 
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.apache.commons.imaging.ImageParser;
 import org.apache.commons.imaging.formats.tiff.TiffImageParser;
 import org.apache.commons.math3.analysis.interpolation.PiecewiseBicubicSplineInterpolator;
@@ -10,7 +11,7 @@ import java.io.File;
  * @author DaPorkchop_
  */
 public interface Constants {
-    File rootDir = new File(".", "../mapData/");
+    File rootDir = FMLCommonHandler.instance().getSidedDelegate() == null ? new File(".", "../mapData/") : new File(".", "../../mapData/");
 
     ImageParser tiffParser = new TiffImageParser();
 
