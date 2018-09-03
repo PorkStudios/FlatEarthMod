@@ -1,6 +1,7 @@
 package net.daporkchop.realmapcc.generator.dataset;
 
 import net.daporkchop.realmapcc.Constants;
+import net.minecraft.util.math.ChunkPos;
 import org.apache.commons.math3.analysis.BivariateFunction;
 
 import java.io.IOException;
@@ -8,7 +9,7 @@ import java.io.IOException;
 /**
  * @author DaPorkchop_
  */
-public interface Dataset<DegreeArray> extends Constants {
+public interface Dataset<DegreeArray, ChunkArray> extends Constants {
     /**
      * Gets a single value at a given point.
      *
@@ -37,6 +38,14 @@ public interface Dataset<DegreeArray> extends Constants {
     default BivariateFunction getInterpolatedData(double lon, double lat, double width, double height) {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * Gets the data for a given chunk
+     *
+     * @param pos the chunk's position
+     * @return the data for the given chunk
+     */
+    ChunkArray getDataForChunk(ChunkPos pos);
 
     /**
      * Gets the number of values per degree of arc.

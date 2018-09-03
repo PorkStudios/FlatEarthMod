@@ -1,11 +1,12 @@
 package net.daporkchop.realmapcc.generator.dataset.surface.water;
 
 import net.daporkchop.realmapcc.generator.dataset.Dataset;
+import net.minecraft.util.math.ChunkPos;
 
 /**
  * @author DaPorkchop_
  */
-public class SurfaceWaterDataset implements Dataset<boolean[]> {
+public class SurfaceWaterDataset implements Dataset<boolean[], boolean[]> {
     //TODO: implement
 
     @Override
@@ -15,6 +16,11 @@ public class SurfaceWaterDataset implements Dataset<boolean[]> {
 
     @Override
     public boolean[] getDataAtDegree(int lon, int lat) {
+        return new boolean[0];
+    }
+
+    @Override
+    public boolean[] getDataForChunk(ChunkPos pos) {
         return new boolean[0];
     }
 

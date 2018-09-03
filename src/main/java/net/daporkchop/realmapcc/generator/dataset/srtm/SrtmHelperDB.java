@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import net.daporkchop.lib.db.PorkDB;
 import net.daporkchop.realmapcc.Constants;
+import net.daporkchop.realmapcc.RealmapCC;
 import net.daporkchop.realmapcc.data.CompactedHeightData;
 import net.daporkchop.realmapcc.data.EmptyCompactedHeightData;
 import net.daporkchop.realmapcc.generator.HeightmapGenerator;
@@ -12,12 +13,13 @@ import net.daporkchop.realmapcc.generator.dataset.Dataset;
 import net.minecraft.util.math.ChunkPos;
 import org.apache.commons.math3.analysis.BivariateFunction;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.floor;
 import static net.daporkchop.lib.math.primitive.Floor.floorI;
 
-public class SrtmHelperDB implements Dataset<short[]> {
+public class SrtmHelperDB implements Dataset<short[], short[]> {
     private final PorkDB<ChunkPos, CompactedHeightData> db;
     private final LoadingCache<ChunkPos, CompactedHeightData> cachedHeights = CacheBuilder.newBuilder()
             .expireAfterAccess(1L, TimeUnit.MINUTES)
@@ -72,60 +74,11 @@ public class SrtmHelperDB implements Dataset<short[]> {
 
     @Override
     public short[] getDataAtDegree(int lon, int lat) {
-        /*int tileX = lon * Constants.SRTM_subDegreeCount;
-        int tileZ = lat * Constants.SRTM_subDegreeCount;
-
-        short[] heights = new short[SRTM_valuesPerDegree * SRTM_valuesPerDegree];
-        for (int tOffsetX = SRTM_subDegreeCount - 1; tOffsetX >= 0; tOffsetX--) {
-            for (int tOffsetZ = SRTM_subDegreeCount - 1; tOffsetZ >= 0; tOffsetZ--) {
-                CompactedHeightData data = this.cachedHeights.getUnchecked(new ChunkPos(tileX + tOffsetX, tileZ + tOffsetZ));
-                for (int x = data.width - 1; x >= 0; x--) {
-                    for (int z = data.width - 1; z >= 0; z--) {
-                        heights[(tOffsetX * SRTM_subDegreeCount + x) * SRTM_valuesPerDegree + (tOffsetZ * SRTM_subDegreeCount + z)] =
-                                (short) data.getHeight(x, z);
-                    }
-                }
-            }
-        }
-        return heights;*/
         throw new UnsupportedOperationException();
     }
 
     @Override
     public BivariateFunction getInterpolatedData(double lon, double lat, double width, double height) {
-        /*if (true) {
-            A:
-            if (this.functionCache != null && !Keyboard.isKeyDown(Keyboard.KEY_Q)) {
-                try {
-                    this.functionCache.value(lat, lon);
-                } catch (Throwable t) {
-                    if (false)   {
-                        return null;
-                    }
-                    System.out.println("Generating new bicubic thingy");
-                    break A;
-                }
-                return this.functionCache;
-            }
-            int a = SRTM_valuesPerDegree * 2;
-            double[] xS = new double[a];
-            double[] zS = new double[a];
-            double[][] vals = new double[a][a];
-            for (int x = a - 1; x >= 0; x--) {
-                xS[x] = floor(lat) + (double) x / SRTM_valuesPerDegree;
-            }
-            for (int z = a - 1; z >= 0; z--) {
-                zS[z] = floor(lon) + (double) z / SRTM_valuesPerDegree;
-            }
-            for (int x = a - 1; x >= 0; x--) {
-                for (int z = a - 1; z >= 0; z--) {
-                    //vals[x][z] = heights[x * SRTM_valuesPerDegree + z];
-                    vals[x][z] = this.getDataAtPos(xS[x], zS[z]);
-                }
-            }
-            this.functionCache = interpolatorBicubic.interpolate(xS, zS, vals);
-            return this.functionCache;
-        }*/
         int offset = 5;
         int valuesX = offset + floorI(width * SRTM_valuesPerDegree) + offset + 1;
         int valuesZ = offset + floorI(height * SRTM_valuesPerDegree) + offset + 1;
@@ -144,7 +97,38 @@ public class SrtmHelperDB implements Dataset<short[]> {
             }
         }
         return interpolatorBicubic.interpolate(xVals, zVals, vals);
-        //return new BicubicInterpolator().interpolate(xVals, zVals, vals);
+    }
+
+    @Override
+    public short[] getDataForChunk(ChunkPos pos) {
+        short[] s = new short[16 * 16];
+        try {
+            BivariateFunction function = this.getInterpolatedData(
+                    (pos.z << 4) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                    (pos.x << 4) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                    16 * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                    16 * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz
+            );
+            if (function == null) {
+                return s;
+            }
+            for (int x = 15; x >= 0; x--) {
+                for (int z = 15; z >= 0; z--) {
+                    s[(x << 4) | z] = (short) (
+                            function.value(
+                                    ((pos.x << 4) | x) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
+                                    ((pos.z << 4) | z) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz
+                            ) * RealmapCC.Conf.scaleVert
+                    );
+                }
+            }
+        } catch (Throwable t) {
+            if (false) {
+                t.printStackTrace();
+            }
+            Arrays.fill(s, (short) 0);
+        }
+        return s;
     }
 
     @Override

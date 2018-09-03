@@ -3,6 +3,7 @@ package net.daporkchop.realmapcc.generator.dataset.surface.cover;
 import net.daporkchop.lib.binary.NBitArray;
 import net.daporkchop.realmapcc.generator.dataset.Dataset;
 import net.daporkchop.realmapcc.util.ImageUtil;
+import net.minecraft.util.math.ChunkPos;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -14,7 +15,7 @@ import static net.daporkchop.realmapcc.generator.dataset.surface.cover.BiomeColo
 /**
  * @author DaPorkchop_
  */
-public class GlobCover implements Dataset<NBitArray> {
+public class GlobCover implements Dataset<NBitArray, BiomeColor[]> {
     public static final GlobCover INSTANCE = new GlobCover();
     public static final File globCoverPath = new File(rootDir, "GlobCover/globcover_colored_shrunk.tif");
     public static ThreadLocal<NBitArray> arrayCache = ThreadLocal.withInitial(
@@ -26,7 +27,7 @@ public class GlobCover implements Dataset<NBitArray> {
     }
 
     @Override
-    public int getDataAtPos(double lon, double lat) {
+    public int getDataAtPos(double lonD, double latD) {
         return 0;
     }
 
@@ -50,6 +51,12 @@ public class GlobCover implements Dataset<NBitArray> {
             }
         }
         return array;
+    }
+
+    @Override
+    public BiomeColor[] getDataForChunk(ChunkPos pos) {
+        //TODO
+        return null;
     }
 
     @Override

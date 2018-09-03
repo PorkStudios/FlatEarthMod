@@ -4,6 +4,7 @@ import net.daporkchop.lib.db.DBBuilder;
 import net.daporkchop.lib.db.DatabaseFormat;
 import net.daporkchop.lib.db.PorkDB;
 import net.daporkchop.realmapcc.data.CompactedHeightData;
+import net.daporkchop.realmapcc.data.capability.HeightsCapability;
 import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.ChunkPos;
@@ -99,6 +100,8 @@ public class RealmapCC implements Constants {
     public void preInit(FMLPreInitializationEvent event) {
         //GeneratorSettingsFix.addFixableWorldType(new RealWorldType());
         new RealWorldType();
+
+        HeightsCapability.register();
     }
 
     @Mod.EventHandler

@@ -1,5 +1,6 @@
 package net.daporkchop.realmapcc.data.capability;
 
+import net.daporkchop.lib.encoding.ToBytes;
 import net.daporkchop.realmapcc.RealmapCC;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagByteArray;
@@ -45,7 +46,7 @@ public class HeightsCapability {
 
     @Mod.EventBusSubscriber
     @SuppressWarnings("unused")
-    private static class EventHandler {
+    public static class EventHandler {
 
         @SubscribeEvent
         public static void attachCapabilities(AttachCapabilitiesEvent<Chunk> event) {
@@ -69,13 +70,19 @@ public class HeightsCapability {
                     short[] s = this.inst.getHeights();
                     if (s == null) {
                         return new NBTTagByteArray(new byte[0]);
+                    } else {
+                        return new NBTTagByteArray(ToBytes.toBytes(s));
                     }
-                    return new NBTTagByteArray();
                 }
 
                 @Override
                 public void deserializeNBT(NBTTagByteArray nbt) {
-
+                    byte[] b = nbt.getByteArray();
+                    if (b.length == 0) {
+                        this.inst.setHeights(null);
+                    } else {
+                        this.inst.setHeights(ToBytes.toShorts(b));
+                    }
                 }
             });
         }

@@ -1,8 +1,5 @@
 package net.daporkchop.realmapcc;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import io.github.opencubicchunks.cubicchunks.api.util.Box;
 import io.github.opencubicchunks.cubicchunks.api.util.Coords;
 import io.github.opencubicchunks.cubicchunks.api.util.CubePos;
@@ -10,69 +7,29 @@ import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.populator.CubePopulatorEvent;
+import net.daporkchop.realmapcc.data.capability.HeightsCapability;
+import net.daporkchop.realmapcc.data.capability.ITerrainHeightHolder;
 import net.daporkchop.realmapcc.generator.dataset.srtm.SrtmHelperDB;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
-import org.apache.commons.math3.analysis.BivariateFunction;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author DaPorkchop_
  */
 public class RealTerrainGenerator implements ICubeGenerator, Constants {
     private final World world;
-    //private final SrtmElevationAPI api = new SrtmElevationAPI(new File("/media/daporkchop/TooMuchStuff/PortableIDE/RealWorldCC/mapData/SRTMGL1/"), SRTM_valuesPerDegree, true);
     private final SrtmHelperDB api = new SrtmHelperDB(RealmapCC.worldDataDB);
-    private final LoadingCache<ChunkPos, short[]> terrainData = CacheBuilder.newBuilder()
-            .expireAfterAccess(10L, TimeUnit.MINUTES)
-            .build(new CacheLoader<ChunkPos, short[]>() {
-                @Override
-                public short[] load(ChunkPos key) {
-                    short[] s = new short[16 * 16];
-                    try {
-                        BivariateFunction function = RealTerrainGenerator.this.api.getInterpolatedData(
-                                (key.z << 4) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
-                                (key.x << 4) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
-                                16 * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
-                                16 * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz
-                        );
-                        if (function == null) {
-                            throw new NullPointerException();
-                        }
-                        for (int x = 15; x >= 0; x--) {
-                            for (int z = 15; z >= 0; z--) {
-                                s[(x << 4) | z] = (short) (
-                                        function.value(
-                                                ((key.x << 4) | x) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz,
-                                                ((key.z << 4) | z) * spaceBetweenBlocks / RealmapCC.Conf.scaleHoriz
-                                        ) * RealmapCC.Conf.scaleVert
-                                );
-                            /*s[(x << 4) | z] = (short) (
-                                    RealTerrainGenerator.this.api.getDataAtPos(
-                                            ((key.x << 4) | x) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz,
-                                            ((key.z << 4) | z) * spaceBetweenBlocks * RealmapCC.Conf.scaleHoriz
-                                    ) * RealmapCC.Conf.scaleVert
-                            );*/
-                            }
-                        }
-                    } catch (Throwable t) {
-                        //t.printStackTrace();
-                    }
-                    return s;
-                }
-            });
 
     public RealTerrainGenerator(World world) {
         this.world = world;
@@ -80,15 +37,30 @@ public class RealTerrainGenerator implements ICubeGenerator, Constants {
 
     @Override
     public void generateColumn(Chunk column) {
+        ITerrainHeightHolder heightHolder = column.getCapability(HeightsCapability.TERRAIN_HEIGHT_CAPABILITY, null);
+        if (heightHolder == null) {
+            throw new RuntimeException(String.format("Column (%d,%d) does not have the terrain height capability!", column.x, column.z));
+        }
+        heightHolder.setHeights(this.api.getDataForChunk(column.getPos()));
         //TODO: set biomes
     }
 
     @Override
     public CubePrimer generateCube(int cubeX, int cubeY, int cubeZ) {
-        //this.terrainData.invalidateAll();
+        short[] heights;
+        {
+            Chunk column = this.world.getChunkFromChunkCoords(cubeX, cubeZ);
+            ITerrainHeightHolder heightHolder = column.getCapability(HeightsCapability.TERRAIN_HEIGHT_CAPABILITY, null);
+            if (heightHolder == null) {
+                throw new RuntimeException(String.format("Column (%d,%d) does not have the terrain height capability!", column.x, column.z));
+            }
+            heights = heightHolder.getHeights();
+        }
+        if (heights == null) {
+            throw new RuntimeException(String.format("Column (%d,%d) has no elevation data!", cubeX, cubeZ));
+        }
 
         CubePrimer primer = new CubePrimer();
-        short[] heights = this.terrainData.getUnchecked(new ChunkPos(cubeX, cubeZ));
         IBlockState stone = Blocks.STONE.getDefaultState();
         for (int x = 15; x >= 0; x--) {
             for (int z = 15; z >= 0; z--) {

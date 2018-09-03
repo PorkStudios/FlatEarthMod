@@ -3,6 +3,7 @@ package net.daporkchop.realmapcc;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.apache.commons.imaging.ImageParser;
 import org.apache.commons.imaging.formats.tiff.TiffImageParser;
+import org.apache.commons.math3.analysis.interpolation.BivariateGridInterpolator;
 import org.apache.commons.math3.analysis.interpolation.PiecewiseBicubicSplineInterpolator;
 
 import java.io.File;
@@ -32,5 +33,5 @@ public interface Constants {
     double spaceBetweenBlocks = 1.0d / 60.0d / 60.0d / 30.0d;
     double spaceBetweenChunks = 16.0d / 60.0d / 60.0d / 30.0d;
 
-    PiecewiseBicubicSplineInterpolator interpolatorBicubic = new PiecewiseBicubicSplineInterpolator();
+    BivariateGridInterpolator interpolatorBicubic = new PiecewiseBicubicSplineInterpolator();
 }
