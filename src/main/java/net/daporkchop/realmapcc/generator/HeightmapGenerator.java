@@ -364,42 +364,16 @@ public class HeightmapGenerator implements Constants {
             BufferedImage target = resampler.filter(reference, null);
             for (int x = origSize - 2; x >= 0; x--) {
                 for (int y = origSize - 2; y >= 0; y--) {
-                    int colA = reference.getRGB(x, y);
-                    int colB = reference.getRGB(x, y + 1);
-                    int colC = reference.getRGB(x + 1, y);
-                    int colD = reference.getRGB(x + 1, y + 1);
-                    int rA = (colA >> 16) & 0xFF;
-                    int gA = (colA >> 8) & 0xFF;
-                    int bA = colA & 0xFF;
-                    int rB = (colB >> 16) & 0xFF;
-                    int gB = (colB >> 8) & 0xFF;
-                    int bB = colB & 0xFF;
-                    int rC = (colC >> 16) & 0xFF;
-                    int gC = (colC >> 8) & 0xFF;
-                    int bC = colC & 0xFF;
-                    int rD = (colD >> 16) & 0xFF;
-                    int gD = (colD >> 8) & 0xFF;
-                    int bD = colD & 0xFF;
-                    if (false) {
-                        rA = floorI(rA * 0.1d) * 10;
-                        gA = floorI(gA * 0.1d) * 10;
-                        bA = floorI(bA * 0.1d) * 10;
-                        rB = floorI(rB * 0.1d) * 10;
-                        gB = floorI(gB * 0.1d) * 10;
-                        bB = floorI(bB * 0.1d) * 10;
-                        rC = floorI(rC * 0.1d) * 10;
-                        gC = floorI(gC * 0.1d) * 10;
-                        bC = floorI(bC * 0.1d) * 10;
-                        rD = floorI(rD * 0.1d) * 10;
-                        gD = floorI(gD * 0.1d) * 10;
-                        bD = floorI(bD * 0.1d) * 10;
-                    }
+                    int colA = reference.getRGB(x, y) & 0xFF;
+                    int colB = reference.getRGB(x, y + 1) & 0xFF;
+                    int colC = reference.getRGB(x + 1, y) & 0xFF;
+                    int colD = reference.getRGB(x + 1, y + 1) & 0xFF;
                     Interpolation2D interp = new BilinearInterpolation(
                             new double[]{0.0d, 1.0d},
                             new double[]{0.0d, 1.0d},
                             new double[][]{
-                                    new double[]{0.0d, rB - rA},
-                                    new double[]{rC - rA, rD - rA}
+                                    new double[]{colA, colB},
+                                    new double[]{colC, colD}
                             }
                     );
                     double diffR = rA - rB;
