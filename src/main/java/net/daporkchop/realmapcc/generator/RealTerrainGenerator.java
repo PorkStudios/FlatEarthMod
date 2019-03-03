@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc;
+package net.daporkchop.realmapcc.generator;
 
 import io.github.opencubicchunks.cubicchunks.api.util.Box;
 import io.github.opencubicchunks.cubicchunks.api.util.Coords;
@@ -7,9 +7,9 @@ import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.populator.CubePopulatorEvent;
-import net.daporkchop.realmapcc.data.capability.HeightsCapability;
-import net.daporkchop.realmapcc.data.capability.ITerrainHeightHolder;
-import net.daporkchop.realmapcc.generator.dataset.srtm.SrtmHelperDB;
+import net.daporkchop.realmapcc.Constants;
+import net.daporkchop.realmapcc.capability.HeightsCapability;
+import net.daporkchop.realmapcc.capability.ITerrainHeightHolder;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
@@ -29,7 +29,7 @@ import java.util.Random;
  */
 public class RealTerrainGenerator implements ICubeGenerator, Constants {
     private final World world;
-    private final SrtmHelperDB api = new SrtmHelperDB(RealmapCC.worldDataDB);
+    //private final SrtmHelperDB api = new SrtmHelperDB(RealmapCC.worldDataDB);
 
     public RealTerrainGenerator(World world) {
         this.world = world;
@@ -41,7 +41,7 @@ public class RealTerrainGenerator implements ICubeGenerator, Constants {
         if (heightHolder == null) {
             throw new RuntimeException(String.format("Column (%d,%d) does not have the terrain height capability!", column.x, column.z));
         }
-        heightHolder.setHeights(this.api.getDataForChunk(column.getPos()));
+        //heightHolder.setHeights(this.api.getDataForChunk(column.getPos()));
         //TODO: set biomes
     }
 

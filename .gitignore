@@ -123,3 +123,5 @@ mods/ConquestReforged-3.0.2-mc1.12.2.jar
 *.zip
 mods/omlib-1.12.2-3.0.0-148.jar
 mods/openmodularturrets-1.12.2-3.0.1-257.jar
+
+/src/old/

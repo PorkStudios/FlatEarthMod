@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc.data.capability;
+package net.daporkchop.realmapcc.capability;
 
 import net.daporkchop.lib.encoding.ToBytes;
 import net.daporkchop.realmapcc.RealmapCC;

@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc.data.capability;
+package net.daporkchop.realmapcc.capability;
 
 /**
  * @author DaPorkchop_

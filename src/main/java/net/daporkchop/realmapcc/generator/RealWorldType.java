@@ -1,4 +1,4 @@
-package net.daporkchop.realmapcc;
+package net.daporkchop.realmapcc.generator;
 
 import io.github.opencubicchunks.cubicchunks.api.util.IntRange;
 import io.github.opencubicchunks.cubicchunks.api.world.ICubicWorldType;
