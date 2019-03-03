@@ -1,13 +1,8 @@
 package net.daporkchop.realmapcc;
 
-import net.daporkchop.lib.db.DBBuilder;
-import net.daporkchop.lib.db.DatabaseFormat;
-import net.daporkchop.lib.db.PorkDB;
 import net.daporkchop.realmapcc.capability.HeightsCapability;
 import net.daporkchop.realmapcc.generator.RealWorldType;
-import net.daporkchop.realmapcc.util.KeyHasherChunkPos;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -36,7 +31,7 @@ public class RealmapCC implements Constants {
     @Mod.Instance(MOD_ID)
     public static RealmapCC INSTANCE;
 
-    public static PorkDB<ChunkPos, CompactedHeightData> worldDataDB;
+    /*public static PorkDB<ChunkPos, CompactedHeightData> worldDataDB;
 
     static {
         Runtime.getRuntime().addShutdownHook(
@@ -49,7 +44,7 @@ public class RealmapCC implements Constants {
                     }
                 }
         );
-    }
+    }*/
 
     public static File getWorkingFolder() {
         File toBeReturned;
@@ -82,14 +77,14 @@ public class RealmapCC implements Constants {
         }
 
         progressBar.step("Opening database");
-        worldDataDB = new DBBuilder<ChunkPos, CompactedHeightData>()
+        /*worldDataDB = new DBBuilder<ChunkPos, CompactedHeightData>()
                 .setForceOpen(true)
                 .setFormat(DatabaseFormat.TREE)
                 .setKeyHasher(KeyHasherChunkPos.instance)
                 .setValueSerializer(CompactedHeightData.serializer)
                 //.setRootFolder(new File(getWorkingFolder(), "realMap/worldData"))
                 .setRootFolder(new File(rootDir, "worldData"))
-                .build();
+                .build();*/
 
         ProgressManager.pop(progressBar);
 

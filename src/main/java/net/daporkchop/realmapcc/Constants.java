@@ -1,5 +1,10 @@
 package net.daporkchop.realmapcc;
 
+import lombok.NonNull;
+
+import java.io.File;
+import java.io.IOException;
+
 import static java.lang.Math.abs;
 
 /**
@@ -48,4 +53,19 @@ public interface Constants {
 
     double spaceBetweenBlocks = 1.0d / 60.0d / 60.0d / 30.0d;
     double spaceBetweenChunks = 16.0d / 60.0d / 60.0d / 30.0d;
+
+    default void ensureDirExists(@NonNull File dir)   {
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IllegalStateException(String.format("Couldn't create directory: %s", dir.getAbsolutePath()));
+        }
+    }
+
+    default void ensureFileExists(@NonNull File f) throws IOException {
+        if (!f.exists())    {
+            this.ensureDirExists(f.getParentFile());
+            if (!f.createNewFile()) {
+                throw new IllegalStateException(String.format("Couldn't create file: %s", f.getAbsolutePath()));
+            }
+        }
+    }
 }
