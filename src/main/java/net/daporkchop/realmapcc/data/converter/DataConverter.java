@@ -41,14 +41,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static net.daporkchop.lib.math.primitive.PMath.clamp;
+import static net.daporkchop.lib.math.primitive.PMath.floorI;
 
 /**
  * @author DaPorkchop_
  */
 @SuppressWarnings("unchecked")
 public class DataConverter implements Constants, Logging {
+    //misc paths
     public static final File DATASET_VERSION_CACHE_FILE = new File("./data/versions.dat");
     public static final File OUTPUT_FILE_ROOT = new File("/home/daporkchop/192.168.1.119/Public/minecraft/mods/realworldcc/data/");
+
+    //dataset paths
+    public static final File SRTM_ROOT = new File("/home/daporkchop/192.168.1.119/Misc/HeightmapData/SRTMGL1");
 
     public static void main(String... args) throws IOException, InterruptedException {
         logger.add(new File("./converter.log"), true);
@@ -57,7 +62,7 @@ public class DataConverter implements Constants, Logging {
 
     protected Map<String, AtomicInteger> datasetVersionCache = new HashMap<>();
     protected List<Dataset> datasets = Arrays.asList(
-            new SRTM(new File("/home/daporkchop/192.168.1.119/Misc/HeightmapData/SRTMGL1"))
+            new SRTM(SRTM_ROOT)
     );
 
     public void start() throws IOException, InterruptedException {
@@ -99,7 +104,11 @@ public class DataConverter implements Constants, Logging {
         }
 
         //generate the data in image form
-        logger.info("Nuking output root...");
+        logger.info("Nuking output root (parallel!)...");
+        if (OUTPUT_FILE_ROOT.exists())  {
+            //parallel deletion of output dirs
+            Stream.of(OUTPUT_FILE_ROOT.listFiles()).parallel().forEach(PorkUtil::rm);
+        }
         PorkUtil.rm(OUTPUT_FILE_ROOT);
         this.ensureDirExists(OUTPUT_FILE_ROOT);
         logger.info("All files in output dir removed.");
@@ -115,15 +124,16 @@ public class DataConverter implements Constants, Logging {
         }
         Cache<PImage> imgCache = ThreadCache.of(() -> new DirectRGBImage(225, 225));
         Cache<Tile> tileCache = ThreadCache.of(Tile::new);
+        AtomicInteger counter = new AtomicInteger(0);
         Stream.of(positions).parallel().forEach((EConsumer<Vec2i>) pos -> {
-            logger.info("Drawing tile at (${0},${1})", pos.getX(), pos.getY());
+            logger.info(String.format("%05.2f%%    Drawing tile at (%03d,%02d)", (double) counter.getAndIncrement() / (LON_DEGREES_TOTAL * LAT_DEGREES_TOTAL) * 100.0d, pos.getX(), pos.getY()));
             PImage img = imgCache.get();
             Tile tile = tileCache.get().setDegLon(pos.getX()).setDegLat(pos.getY());
 
             boolean first = true;
             for (int tileX = STEPS_PER_DEGREE - 1; tileX >= 0; tileX--) {
                 for (int tileY = STEPS_PER_DEGREE - 1; tileY >= 0; tileY--) {
-                    tile.setDegLon(tileX).setDegLat(tileY);
+                    tile.setTileLon(tileX).setTileLat(tileY);
                     for (Dataset dataset : this.datasets) {
                         dataset.applyTo(tile);
                     }
@@ -163,8 +173,7 @@ public class DataConverter implements Constants, Logging {
                     dst.copy(tmp, 0, 0, lon * TILE_SIZE, lat * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
             }
-            ImageInterpolator interpolator = new ImageInterpolator(new LinearInterpolationEngine());
-            PorkUtil.simpleDisplayImage(interpolator.interp(dst, 512, 512).getAsBufferedImage(), true);
+            PorkUtil.simpleDisplayImage(INTERPOLATOR_LINEAR.interp(dst, 512, 512).getAsBufferedImage(), true);
         } else if (false) {
             //test to see if cloudflare mangles images
             int[] b = new int[225 * 225];

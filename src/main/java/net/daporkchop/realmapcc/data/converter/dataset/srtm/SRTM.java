@@ -1,9 +1,14 @@
 package net.daporkchop.realmapcc.data.converter.dataset.srtm;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.daporkchop.lib.common.function.io.IOFunction;
+import net.daporkchop.lib.common.util.PorkUtil;
 import net.daporkchop.lib.math.vector.i.Vec2i;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.Tile;
@@ -16,6 +21,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author DaPorkchop_
@@ -52,7 +58,26 @@ public class SRTM implements Dataset {
 
     @NonNull
     protected final File root;
-    protected final Map<Vec2i, ByteBuffer> regionCache = Constants.newSoftCache();
+    protected final LoadingCache<Vec2i, ByteBuffer> regionCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(1L, TimeUnit.MINUTES)
+            .removalListener((RemovalListener<Vec2i, ByteBuffer>) notification -> PorkUtil.release(notification.getValue()))
+            .build(new CacheLoader<Vec2i, ByteBuffer>() {
+                @Override
+                public ByteBuffer load(@NonNull Vec2i key) throws Exception {
+                    File file = getSrtmFileName(key.getY(), key.getX(), SRTM.this.root); //yes, these are swapped
+                    if (file.exists()) {
+                        try (FileChannel channel = FileChannel.open(file.toPath(), Collections.singleton(StandardOpenOption.READ))) {
+                            ByteBuffer toReturn = ByteBuffer.allocateDirect((ARCSECONDS_PER_DEGREE + 1) * (ARCSECONDS_PER_DEGREE + 1) * 2);
+                            if (channel.read(toReturn, 0L) != (ARCSECONDS_PER_DEGREE + 1) * (ARCSECONDS_PER_DEGREE + 1) * 2) {
+                                throw new IllegalStateException("File not read completely!");
+                            }
+                            return toReturn;
+                        }
+                    } else {
+                        return ByteBuffer.allocateDirect(0);
+                    }
+                }
+            });
 
     @Override
     public String getName() {
@@ -61,20 +86,7 @@ public class SRTM implements Dataset {
 
     @Override
     public void applyTo(@NonNull Tile tile) {
-        ByteBuffer buf = this.regionCache.computeIfAbsent(new Vec2i(tile.getDegLon(), tile.getDegLat()), (IOFunction<Vec2i, ByteBuffer>) pos -> {
-            File file = getSrtmFileName(pos.getY(), pos.getX(), this.root); //yes, these are swapped
-            if (file.exists()) {
-                try (FileChannel channel = FileChannel.open(file.toPath(), Collections.singleton(StandardOpenOption.READ))) {
-                    ByteBuffer toReturn = ByteBuffer.allocateDirect((ARCSECONDS_PER_DEGREE + 1) * (ARCSECONDS_PER_DEGREE + 1) * 2);
-                    if (channel.read(toReturn, 0L) != (ARCSECONDS_PER_DEGREE + 1) * (ARCSECONDS_PER_DEGREE + 1) * 2) {
-                        throw new IllegalStateException("File not read completely!");
-                    }
-                    return toReturn;
-                }
-            } else {
-                return ByteBuffer.allocate(0);
-            }
-        });
+        ByteBuffer buf = this.regionCache.getUnchecked(new Vec2i(tile.getDegLon(), tile.getDegLat()));
         if (buf.capacity() == 0)    {
             for (int x = TILE_SIZE - 1; x >= 0; x--) {
                 for (int y = TILE_SIZE - 1; y >= 0; y--) {

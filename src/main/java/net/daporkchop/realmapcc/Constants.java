@@ -1,6 +1,9 @@
 package net.daporkchop.realmapcc;
 
 import lombok.NonNull;
+import net.daporkchop.lib.graphics.util.ImageInterpolator;
+import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
+import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
 import sun.misc.SoftCache;
 
 import java.io.File;
@@ -88,6 +91,8 @@ public interface Constants {
         return (Map<K, V>) new SoftCache();
     }
 
+    ImageInterpolator INTERPOLATOR_LINEAR = new ImageInterpolator(new LinearInterpolationEngine());
+    ImageInterpolator INTERPOLATOR_CUBIC = new ImageInterpolator(new CubicInterpolationEngine());
 
     //some older values from way back when
     int GLOBCOVER_valuesPerDegree = 360;
