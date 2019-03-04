@@ -9,6 +9,9 @@ import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.TilePos;
 import net.daporkchop.realmapcc.util.TileWrapperImage;
+import org.apache.commons.imaging.ImageFormats;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.Imaging;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,9 +41,12 @@ public class DiskTileCache extends AbstractTileLookup<DiskTileCache> {
                 DataConstants.loadImage(file, wrapper);
                 return wrapper.getTile();
             } else {
+                Tile tile = super.getTile(pos);
+                this.ensureDirExists(file.getParentFile());
+                Imaging.writeImage(tile.getWrapper().getAsBufferedImage(), file, ImageFormats.PNG, null);
+                return tile;
             }
-            return null;
-        } catch (IOException e) {
+        } catch (IOException | ImageWriteException e) {
             throw new RuntimeException(e);
         }
     }

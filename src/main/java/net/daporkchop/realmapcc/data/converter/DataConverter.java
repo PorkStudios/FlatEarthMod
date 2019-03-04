@@ -2,7 +2,7 @@ package net.daporkchop.realmapcc.data.converter;
 
 import net.daporkchop.lib.binary.stream.DataIn;
 import net.daporkchop.lib.binary.stream.DataOut;
-import net.daporkchop.lib.common.function.throwing.EConsumer;
+import net.daporkchop.lib.common.function.throwing.EBiConsumer;
 import net.daporkchop.lib.common.util.PorkUtil;
 import net.daporkchop.lib.concurrent.cache.Cache;
 import net.daporkchop.lib.concurrent.cache.ThreadCache;
@@ -17,7 +17,6 @@ import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
-import net.daporkchop.realmapcc.util.DirectRGBImage;
 import net.daporkchop.realmapcc.util.TileWrapperImage;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
@@ -37,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static net.daporkchop.lib.math.primitive.PMath.clamp;
-import static net.daporkchop.lib.math.primitive.PMath.floorI;
 
 /**
  * @author DaPorkchop_
@@ -101,7 +99,7 @@ public class DataConverter implements Constants, Logging {
 
         //generate the data in image form
         logger.info("Nuking output root (parallel!)...");
-        if (OUTPUT_FILE_ROOT.exists())  {
+        if (OUTPUT_FILE_ROOT.exists()) {
             //parallel deletion of output dirs
             Stream.of(OUTPUT_FILE_ROOT.listFiles()).parallel().forEach(PorkUtil::rm);
         }
@@ -120,14 +118,8 @@ public class DataConverter implements Constants, Logging {
         }
         Cache<TileWrapperImage> tileCache = ThreadCache.of(TileWrapperImage::new);
         AtomicInteger counter = new AtomicInteger(0);
-        Stream.of(positions).parallel().forEach((EConsumer<Vec2i>) pos -> {
-            {
-                int curr = counter.getAndIncrement();
-                if (curr > 3)   {
-                    return;
-                }
-                logger.info(String.format("% 5.2f%%  % 5d/% 5d  Drawing tile at (% 4d, % 3d)", (double) curr / DEGREE_SEGMENTS * 100.0d, curr, DEGREE_SEGMENTS, pos.getX(), pos.getY()));
-            }
+        EBiConsumer<Integer, Vec2i> consumer = (curr, pos) -> {
+            logger.info(String.format("% 5.2f%%  % 5d/% 5d  Drawing tile at (% 4d, % 3d)", (double) curr / DEGREE_SEGMENTS * 100.0d, curr, DEGREE_SEGMENTS, pos.getX(), pos.getY()));
             TileWrapperImage img = tileCache.get();
             Tile tile = img.getTile().setDegLon(pos.getX()).setDegLat(pos.getY());
 
@@ -139,7 +131,7 @@ public class DataConverter implements Constants, Logging {
                         dataset.applyTo(tile);
                     }
                     File file = new File(OUTPUT_FILE_ROOT, DataConstants.getSubpath(pos.getX(), pos.getY(), tileX, tileY));
-                    if (first)  {
+                    if (first) {
                         this.ensureDirExists(file.getParentFile());
                         first = false;
                     }
@@ -147,7 +139,15 @@ public class DataConverter implements Constants, Logging {
                     Imaging.writeImage(img.getAsBufferedImage(), file, ImageFormats.PNG, null);
                 }
             }
-        });
+        };
+        for (int i = CPU_COUNT - 1; i >= 0; i--) {
+            new Thread(null, () -> {
+                int next;
+                while ((next = counter.getAndIncrement()) < DEGREE_SEGMENTS) {
+                    consumer.accept(next, positions[next]);
+                }
+            }, String.format("RealWorldCC data converter #%d", i)).start();
+        }
 
         //dirty tests
         if (false) {

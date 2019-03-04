@@ -103,11 +103,13 @@ public class TileWrapperImage implements PImage, Constants {
 
     protected static class FastRGBColorModel extends ColorModel {
         protected static PField field_numComponents = PField.of(ColorModel.class, "numComponents");
+        protected static PField field_supportsAlpha = PField.of(ColorModel.class, "supportsAlpha");
 
         public FastRGBColorModel() {
             super(24);
 
             field_numComponents.setInt(this, 3);
+            field_supportsAlpha.setBoolean(this, false);
         }
 
         @Override
