@@ -5,9 +5,14 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import net.daporkchop.lib.binary.Data;
+import net.daporkchop.lib.binary.stream.DataIn;
+import net.daporkchop.lib.binary.stream.DataOut;
 import net.daporkchop.lib.common.util.PUnsafe;
 import net.daporkchop.lib.common.util.PorkUtil;
 import net.daporkchop.realmapcc.Constants;
+
+import java.io.IOException;
 
 /**
  * A single square section of the global data.

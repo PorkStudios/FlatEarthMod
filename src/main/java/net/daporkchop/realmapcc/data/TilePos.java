@@ -26,6 +26,7 @@ public class TilePos implements Constants {
     protected final int degLat;
     protected final int tileLon;
     protected final int tileLat;
+    protected String subpath = null;
 
     public TilePos(int degLon, int degLat, int tileLon, int tileLat) {
         validatePos(degLon, degLat, tileLon, tileLat);
@@ -36,8 +37,12 @@ public class TilePos implements Constants {
         this.tileLat = tileLat;
     }
 
-    public String getSubpath() {
-        return DataConstants.getSubpath(this.degLon, this.degLat, this.tileLon, this.tileLat);
+    public synchronized String getSubpath() {
+        String subpath = this.subpath;
+        if (subpath == null)    {
+            subpath = DataConstants.getSubpath(this.degLon, this.degLat, this.tileLon, this.tileLat);
+        }
+        return subpath;
     }
 
     @Override

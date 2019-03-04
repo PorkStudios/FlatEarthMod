@@ -5,6 +5,6 @@ package net.daporkchop.realmapcc.data;
  */
 public interface DataConstants {
     static String getSubpath(int degLon, int degLat, int tileLon, int tileLat)    {
-        return String.format("%03d/%02d/%02d.%02d.png", degLon, degLat, tileLon, tileLat);
+        return String.format("%04d/%03d/%02d.%02d.png", degLon, degLat, tileLon, tileLat);
     }
 }
