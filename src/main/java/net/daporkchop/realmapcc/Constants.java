@@ -29,7 +29,7 @@ public interface Constants {
 
     //the total size of the usable data region (in °)
     int LON_DEGREES_TOTAL = abs(LONGITUDE_MIN - LONGITUDE_MAX);
-    int LAT_DEGREES_TOTAL = abs(LATITUDE_MIN - LATITUDE_MAX);
+    int LAT_DEGREES_TOTAL = abs(LATITUDE_MIN - LATITUDE_MAX) + 1;
 
     //the number of arc-seconds per degree of arc
     int ARCSECONDS_PER_DEGREE = 3600;

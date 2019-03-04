@@ -2,17 +2,32 @@ package net.daporkchop.realmapcc.data.converter;
 
 import net.daporkchop.lib.binary.stream.DataIn;
 import net.daporkchop.lib.binary.stream.DataOut;
+import net.daporkchop.lib.common.function.io.IOConsumer;
+import net.daporkchop.lib.common.function.throwing.EConsumer;
+import net.daporkchop.lib.common.function.throwing.ESupplier;
 import net.daporkchop.lib.common.util.PorkUtil;
+import net.daporkchop.lib.concurrent.cache.Cache;
+import net.daporkchop.lib.concurrent.cache.ThreadCache;
 import net.daporkchop.lib.graphics.PImage;
 import net.daporkchop.lib.graphics.impl.image.DirectImage;
 import net.daporkchop.lib.graphics.util.ImageInterpolator;
+import net.daporkchop.lib.hash.util.Digest;
+import net.daporkchop.lib.http.SimpleHTTP;
 import net.daporkchop.lib.logging.Logging;
 import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
+import net.daporkchop.lib.math.vector.i.Vec2i;
 import net.daporkchop.realmapcc.Constants;
+import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTM;
+import net.daporkchop.realmapcc.util.DirectRGBImage;
+import org.apache.commons.imaging.ImageFormat;
+import org.apache.commons.imaging.ImageFormats;
+import org.apache.commons.imaging.Imaging;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -21,7 +36,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static net.daporkchop.lib.math.primitive.PMath.clamp;
 
@@ -31,8 +48,9 @@ import static net.daporkchop.lib.math.primitive.PMath.clamp;
 @SuppressWarnings("unchecked")
 public class DataConverter implements Constants, Logging {
     public static final File DATASET_VERSION_CACHE_FILE = new File("./data/versions.dat");
+    public static final File OUTPUT_FILE_ROOT = new File("/home/daporkchop/192.168.1.119/Public/minecraft/mods/realworldcc/data/");
 
-    public static void main(String... args) throws IOException {
+    public static void main(String... args) throws IOException, InterruptedException {
         logger.add(new File("./converter.log"), true);
         new DataConverter().start();
     }
@@ -42,7 +60,7 @@ public class DataConverter implements Constants, Logging {
             new SRTM(new File("/home/daporkchop/192.168.1.119/Misc/HeightmapData/SRTMGL1"))
     );
 
-    public void start() throws IOException {
+    public void start() throws IOException, InterruptedException {
         if (DATASET_VERSION_CACHE_FILE.exists()) {
             logger.debug("Loading dataset version cache...");
             try (ObjectInputStream in = new ObjectInputStream(DataIn.wrap(DATASET_VERSION_CACHE_FILE))) {
@@ -80,8 +98,53 @@ public class DataConverter implements Constants, Logging {
             }
         }
 
-        //dirty test
-        if (true) {
+        //generate the data in image form
+        logger.info("Nuking output root...");
+        PorkUtil.rm(OUTPUT_FILE_ROOT);
+        this.ensureDirExists(OUTPUT_FILE_ROOT);
+        logger.info("All files in output dir removed.");
+
+        Vec2i[] positions = new Vec2i[LON_DEGREES_TOTAL * LAT_DEGREES_TOTAL];
+        {
+            int i = 0;
+            for (int y = LATITUDE_MIN; y < LATITUDE_MAX; y++) {
+                for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
+                    positions[i++] = new Vec2i(x, y);
+                }
+            }
+        }
+        Cache<PImage> imgCache = ThreadCache.of(() -> new DirectRGBImage(225, 225));
+        Cache<Tile> tileCache = ThreadCache.of(Tile::new);
+        Stream.of(positions).parallel().forEach((EConsumer<Vec2i>) pos -> {
+            logger.info("Drawing tile at (${0},${1})", pos.getX(), pos.getY());
+            PImage img = imgCache.get();
+            Tile tile = tileCache.get().setDegLon(pos.getX()).setDegLat(pos.getY());
+
+            boolean first = true;
+            for (int tileX = STEPS_PER_DEGREE - 1; tileX >= 0; tileX--) {
+                for (int tileY = STEPS_PER_DEGREE - 1; tileY >= 0; tileY--) {
+                    tile.setDegLon(tileX).setDegLat(tileY);
+                    for (Dataset dataset : this.datasets) {
+                        dataset.applyTo(tile);
+                    }
+                    for (int x = TILE_SIZE - 1; x >= 0; x--) {
+                        for (int y = TILE_SIZE - 1; y >= 0; y--) {
+                            img.setRGB(x, y, tile.getRawVal(x, y));
+                        }
+                    }
+                    File file = new File(OUTPUT_FILE_ROOT, DataConstants.getSubpath(pos.getX(), pos.getY(), tileX, tileY));
+                    if (first)  {
+                        this.ensureDirExists(file.getParentFile());
+                        first = false;
+                    }
+                    //this.ensureFileExists(file);
+                    Imaging.writeImage(img.getAsBufferedImage(), file, ImageFormats.PNG, null);
+                }
+            }
+        });
+
+        //dirty tests
+        if (false) {
             //this simply displays the center of switzerland in bad resolution
             PImage dst = new DirectImage(TILE_SIZE * STEPS_PER_DEGREE, TILE_SIZE * STEPS_PER_DEGREE, true);
             PImage tmp = new DirectImage(TILE_SIZE, TILE_SIZE, true);
@@ -102,6 +165,37 @@ public class DataConverter implements Constants, Logging {
             }
             ImageInterpolator interpolator = new ImageInterpolator(new LinearInterpolationEngine());
             PorkUtil.simpleDisplayImage(interpolator.interp(dst, 512, 512).getAsBufferedImage(), true);
+        } else if (false) {
+            //test to see if cloudflare mangles images
+            int[] b = new int[225 * 225];
+            for (int i = b.length - 1; i >= 0; i--) {
+                b[i] = ThreadLocalRandom.current().nextInt() & 0xFFFFFF;
+            }
+            BufferedImage img = new BufferedImage(225, 225, BufferedImage.TYPE_INT_RGB);
+            int i = 0;
+            for (int x = 224; x >= 0; x--) {
+                for (int y = 224; y >= 0; y--) {
+                    img.setRGB(x, y, b[i++]);
+                }
+            }
+            ImageIO.write(img, "png", new File("/home/daporkchop/192.168.1.119/Public/misc/test.png"));
+            logger.info("Image written.");
+            byte[] hash = Digest.SHA3_512.hash(new File("/home/daporkchop/192.168.1.119/Public/misc/test.png")).getHash();
+
+            byte[] fetchedBytes = SimpleHTTP.get("https://cloud.daporkchop.net/misc/test.png");
+            byte[] hash2 = Digest.SHA3_512.hash(fetchedBytes).getHash();
+            if (!Arrays.equals(hash, hash2)) {
+                throw new IllegalStateException("Bytes don't match!");
+            }
+
+            logger.info("Waiting 30 seconds...");
+            Thread.sleep(30000L);
+
+            fetchedBytes = SimpleHTTP.get("https://cloud.daporkchop.net/misc/test.png");
+            hash2 = Digest.SHA3_512.hash(fetchedBytes).getHash();
+            if (!Arrays.equals(hash, hash2)) {
+                throw new IllegalStateException("Bytes don't match!");
+            }
         }
     }
 }

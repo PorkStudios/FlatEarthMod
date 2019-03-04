@@ -47,7 +47,7 @@ public class SRTM implements Dataset {
         nf.setMinimumIntegerDigits(3);
         f_nlon = nf.format(nlon);
 
-        return new File(localDir, NS + f_nlat + WE + f_nlon + ".hgt");
+        return new File(localDir, String.format("%s%s%s%s.hgt", NS, f_nlat, WE, f_nlon)/*NS + f_nlat + WE + f_nlon + ".hgt"*/);
     }
 
     @NonNull

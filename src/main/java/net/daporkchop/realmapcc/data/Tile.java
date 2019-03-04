@@ -25,7 +25,7 @@ public class Tile implements Constants {
     protected int tileLon = Integer.MIN_VALUE;
     protected int tileLat = Integer.MIN_VALUE;
 
-    protected final long addr = PUnsafe.allocateMemory(this, TILE_LIMIT); //4 times
+    protected final long addr = PUnsafe.allocateMemory(this, TILE_LIMIT);
 
     //getters and setters lol
     public int getRawVal(int x, int y)  {
