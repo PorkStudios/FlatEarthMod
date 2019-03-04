@@ -40,7 +40,7 @@ public class TilePos implements Constants {
     public synchronized String getSubpath() {
         String subpath = this.subpath;
         if (subpath == null)    {
-            subpath = DataConstants.getSubpath(this.degLon, this.degLat, this.tileLon, this.tileLat);
+            subpath = this.subpath = DataConstants.getSubpath(this.degLon, this.degLat, this.tileLon, this.tileLat);
         }
         return subpath;
     }

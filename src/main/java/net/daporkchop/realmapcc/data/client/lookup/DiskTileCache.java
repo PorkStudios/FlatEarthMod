@@ -5,10 +5,13 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.TilePos;
+import net.daporkchop.realmapcc.util.TileWrapperImage;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Stores tiles on the disk somewhere!
@@ -27,11 +30,18 @@ public class DiskTileCache extends AbstractTileLookup<DiskTileCache> {
 
     @Override
     public Tile getTile(@NonNull TilePos pos) {
-        File file = new File(this.root, pos.getSubpath());
-        //TODO: fast tile to image serialization without having to copy pixels
-        if (file.exists())  {
-        } else {
+        try {
+            File file = new File(this.root, pos.getSubpath());
+            //TODO: fast tile to image serialization without having to copy pixels
+            if (file.exists()) {
+                TileWrapperImage wrapper = new TileWrapperImage();
+                DataConstants.loadImage(file, wrapper);
+                return wrapper.getTile();
+            } else {
+            }
+            return null;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return null;
     }
 }

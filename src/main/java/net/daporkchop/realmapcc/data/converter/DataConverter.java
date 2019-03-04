@@ -18,6 +18,7 @@ import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
 import net.daporkchop.realmapcc.util.DirectRGBImage;
+import net.daporkchop.realmapcc.util.TileWrapperImage;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
 
@@ -117,16 +118,18 @@ public class DataConverter implements Constants, Logging {
                 }
             }
         }
-        Cache<PImage> imgCache = ThreadCache.of(() -> new DirectRGBImage(225, 225));
-        Cache<Tile> tileCache = ThreadCache.of(Tile::new);
+        Cache<TileWrapperImage> tileCache = ThreadCache.of(TileWrapperImage::new);
         AtomicInteger counter = new AtomicInteger(0);
         Stream.of(positions).parallel().forEach((EConsumer<Vec2i>) pos -> {
             {
                 int curr = counter.getAndIncrement();
+                if (curr > 3)   {
+                    return;
+                }
                 logger.info(String.format("% 5.2f%%  % 5d/% 5d  Drawing tile at (% 4d, % 3d)", (double) curr / DEGREE_SEGMENTS * 100.0d, curr, DEGREE_SEGMENTS, pos.getX(), pos.getY()));
             }
-            PImage img = imgCache.get();
-            Tile tile = tileCache.get().setDegLon(pos.getX()).setDegLat(pos.getY());
+            TileWrapperImage img = tileCache.get();
+            Tile tile = img.getTile().setDegLon(pos.getX()).setDegLat(pos.getY());
 
             boolean first = true;
             for (int tileX = STEPS_PER_DEGREE - 1; tileX >= 0; tileX--) {
@@ -134,11 +137,6 @@ public class DataConverter implements Constants, Logging {
                     tile.setTileLon(tileX).setTileLat(tileY);
                     for (Dataset dataset : this.datasets) {
                         dataset.applyTo(tile);
-                    }
-                    for (int x = TILE_SIZE - 1; x >= 0; x--) {
-                        for (int y = TILE_SIZE - 1; y >= 0; y--) {
-                            img.setRGB(x, y, tile.getRawVal(x, y));
-                        }
                     }
                     File file = new File(OUTPUT_FILE_ROOT, DataConstants.getSubpath(pos.getX(), pos.getY(), tileX, tileY));
                     if (first)  {
