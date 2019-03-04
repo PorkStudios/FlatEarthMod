@@ -1,6 +1,7 @@
 package net.daporkchop.realmapcc.data;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -67,5 +68,18 @@ public class Tile implements Constants {
             throw new IllegalArgumentException(String.format("Invalid position: (%d,%d)", x, y));
         }
         return this.addr;
+    }
+
+    public Tile validatePos()   {
+        TilePos.validatePos(this.degLon, this.degLat, this.tileLon, this.tileLat);
+        return this;
+    }
+
+    public TilePos getPos() {
+        return new TilePos(this.degLon, this.degLat, this.tileLon, this.tileLat);
+    }
+
+    public Tile setPos(@NonNull TilePos pos)    {
+        return this.setDegLon(pos.degLon).setDegLat(pos.degLat).setTileLon(pos.tileLon).setTileLat(pos.tileLat);
     }
 }

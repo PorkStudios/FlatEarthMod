@@ -25,14 +25,18 @@ public interface Constants {
 
     //the limits of the data that exists
     //only data inside of this region will be used
+    //these values imply the presence of data up until the very end of that number (i.e. until -179.99999999999)
     int LONGITUDE_MAX = 180;
-    int LATITUDE_MAX = 60;
-    int LONGITUDE_MIN = -180;
+    int LATITUDE_MAX = 59;
+    int LONGITUDE_MIN = -179;
     int LATITUDE_MIN = -56;
 
     //the total size of the usable data region (in °)
-    int LON_DEGREES_TOTAL = abs(LONGITUDE_MIN - LONGITUDE_MAX);
+    int LON_DEGREES_TOTAL = abs(LONGITUDE_MIN - LONGITUDE_MAX) + 1;
     int LAT_DEGREES_TOTAL = abs(LATITUDE_MIN - LATITUDE_MAX) + 1;
+
+    //the total number of 1°² (one degree squared) segments across the entire globe
+    int DEGREE_SEGMENTS = LON_DEGREES_TOTAL * LAT_DEGREES_TOTAL;
 
     //the number of arc-seconds per degree of arc
     int ARCSECONDS_PER_DEGREE = 3600;

@@ -7,10 +7,8 @@ import com.google.common.cache.RemovalListener;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import net.daporkchop.lib.common.function.io.IOFunction;
 import net.daporkchop.lib.common.util.PorkUtil;
 import net.daporkchop.lib.math.vector.i.Vec2i;
-import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 
@@ -18,42 +16,32 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
-import java.text.NumberFormat;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static java.lang.Math.abs;
+import static net.daporkchop.lib.math.primitive.PMath.floorI;
 
 /**
  * @author DaPorkchop_
  */
 @RequiredArgsConstructor
 @Getter
-public class SRTM implements Dataset {
+public class SRTMDataset implements Dataset {
     protected static File getSrtmFileName(int lat, int lon, @NonNull File localDir) {
-        int nlat = Math.abs((int) Math.floor(lat));
-        int nlon = Math.abs((int) Math.floor(lon));
+        //int lonFloor = abs(floorI(lon));
+        //int latFloor = abs(floorI(lat));
 
-        NumberFormat nf = NumberFormat.getInstance();
-        String NS, WE;
-        String f_nlat, f_nlon;
+        char NS = lat > 0 ? 'N' : 'S';
+        char EW = lon > 0 ? 'E' : 'W';
 
-        if (lat > 0) {
-            NS = "N";
-        } else {
-            NS = "S";
-        }
-        if (lon > 0) {
-            WE = "E";
-        } else {
-            WE = "W";
-        }
+        //NumberFormat nf = NumberFormat.getInstance();
+        //nf.setMinimumIntegerDigits(2);
+        //String f_nlat = nf.format(latFloor);
+        //nf.setMinimumIntegerDigits(3);
+        //String f_nlon = nf.format(lonFloor);
 
-        nf.setMinimumIntegerDigits(2);
-        f_nlat = nf.format(nlat);
-        nf.setMinimumIntegerDigits(3);
-        f_nlon = nf.format(nlon);
-
-        return new File(localDir, String.format("%s%s%s%s.hgt", NS, f_nlat, WE, f_nlon)/*NS + f_nlat + WE + f_nlon + ".hgt"*/);
+        return new File(localDir, String.format("%c%02d%c%03d.hgt", NS, abs(floorI(lat)), EW, abs(floorI(lon))));
     }
 
     @NonNull
@@ -64,7 +52,7 @@ public class SRTM implements Dataset {
             .build(new CacheLoader<Vec2i, ByteBuffer>() {
                 @Override
                 public ByteBuffer load(@NonNull Vec2i key) throws Exception {
-                    File file = getSrtmFileName(key.getY(), key.getX(), SRTM.this.root); //yes, these are swapped
+                    File file = getSrtmFileName(key.getY(), key.getX(), SRTMDataset.this.root); //yes, these are swapped
                     if (file.exists()) {
                         try (FileChannel channel = FileChannel.open(file.toPath(), Collections.singleton(StandardOpenOption.READ))) {
                             ByteBuffer toReturn = ByteBuffer.allocateDirect((ARCSECONDS_PER_DEGREE + 1) * (ARCSECONDS_PER_DEGREE + 1) * 2);
@@ -86,6 +74,7 @@ public class SRTM implements Dataset {
 
     @Override
     public void applyTo(@NonNull Tile tile) {
+        tile.validatePos();
         ByteBuffer buf = this.regionCache.getUnchecked(new Vec2i(tile.getDegLon(), tile.getDegLat()));
         if (buf.capacity() == 0)    {
             for (int x = TILE_SIZE - 1; x >= 0; x--) {

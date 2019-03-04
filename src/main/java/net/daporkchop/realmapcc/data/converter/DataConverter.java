@@ -2,27 +2,22 @@ package net.daporkchop.realmapcc.data.converter;
 
 import net.daporkchop.lib.binary.stream.DataIn;
 import net.daporkchop.lib.binary.stream.DataOut;
-import net.daporkchop.lib.common.function.io.IOConsumer;
 import net.daporkchop.lib.common.function.throwing.EConsumer;
-import net.daporkchop.lib.common.function.throwing.ESupplier;
 import net.daporkchop.lib.common.util.PorkUtil;
 import net.daporkchop.lib.concurrent.cache.Cache;
 import net.daporkchop.lib.concurrent.cache.ThreadCache;
 import net.daporkchop.lib.graphics.PImage;
 import net.daporkchop.lib.graphics.impl.image.DirectImage;
-import net.daporkchop.lib.graphics.util.ImageInterpolator;
 import net.daporkchop.lib.hash.util.Digest;
 import net.daporkchop.lib.http.SimpleHTTP;
 import net.daporkchop.lib.logging.Logging;
-import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
 import net.daporkchop.lib.math.vector.i.Vec2i;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
-import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTM;
+import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
 import net.daporkchop.realmapcc.util.DirectRGBImage;
-import org.apache.commons.imaging.ImageFormat;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
 
@@ -62,7 +57,7 @@ public class DataConverter implements Constants, Logging {
 
     protected Map<String, AtomicInteger> datasetVersionCache = new HashMap<>();
     protected List<Dataset> datasets = Arrays.asList(
-            new SRTM(SRTM_ROOT)
+            new SRTMDataset(SRTM_ROOT)
     );
 
     public void start() throws IOException, InterruptedException {
@@ -113,10 +108,10 @@ public class DataConverter implements Constants, Logging {
         this.ensureDirExists(OUTPUT_FILE_ROOT);
         logger.info("All files in output dir removed.");
 
-        Vec2i[] positions = new Vec2i[LON_DEGREES_TOTAL * LAT_DEGREES_TOTAL];
+        Vec2i[] positions = new Vec2i[DEGREE_SEGMENTS];
         {
             int i = 0;
-            for (int y = LATITUDE_MIN; y < LATITUDE_MAX; y++) {
+            for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
                 for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
                     positions[i++] = new Vec2i(x, y);
                 }
@@ -126,7 +121,10 @@ public class DataConverter implements Constants, Logging {
         Cache<Tile> tileCache = ThreadCache.of(Tile::new);
         AtomicInteger counter = new AtomicInteger(0);
         Stream.of(positions).parallel().forEach((EConsumer<Vec2i>) pos -> {
-            logger.info(String.format("%05.2f%%    Drawing tile at (%03d,%02d)", (double) counter.getAndIncrement() / (LON_DEGREES_TOTAL * LAT_DEGREES_TOTAL) * 100.0d, pos.getX(), pos.getY()));
+            {
+                int curr = counter.getAndIncrement();
+                logger.info(String.format("% 5.2f%%  % 5d/% 5d  Drawing tile at (% 4d, % 3d)", (double) curr / DEGREE_SEGMENTS * 100.0d, curr, DEGREE_SEGMENTS, pos.getX(), pos.getY()));
+            }
             PImage img = imgCache.get();
             Tile tile = tileCache.get().setDegLon(pos.getX()).setDegLat(pos.getY());
 
