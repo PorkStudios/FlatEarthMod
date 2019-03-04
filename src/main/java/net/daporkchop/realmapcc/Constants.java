@@ -1,11 +1,14 @@
 package net.daporkchop.realmapcc;
 
 import lombok.NonNull;
+import sun.misc.SoftCache;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import static java.lang.Math.abs;
+import static net.daporkchop.lib.math.primitive.PMath.floorI;
 
 /**
  * Some random constant values that are used throughout the program for easy access
@@ -14,6 +17,8 @@ import static java.lang.Math.abs;
  */
 public interface Constants {
     //ImageParser tiffParser = new TiffImageParser();
+
+    int CPU_COUNT = Runtime.getRuntime().availableProcessors();
 
     //the limits of the data that exists
     //only data inside of this region will be used
@@ -34,8 +39,8 @@ public interface Constants {
     int LAT_ARCSECONDS_TOTAL = LAT_DEGREES_TOTAL * ARCSECONDS_PER_DEGREE;
 
     //the number of steps per degree of arc, a step being an ambiguously defined number
-    // which represents the number of segments that each degree of arc will be split into
-    // along both axes (i.e. each degree of arc will be split into 16² segments)
+    // which represents the number of tiles that each degree of arc will be split into
+    // along both axes (i.e. each degree of arc will be split into 16² tiles)
     int STEPS_PER_DEGREE = 16;
 
     //the total size of the usable data region (in steps)
@@ -43,16 +48,15 @@ public interface Constants {
     int LAT_STEPS_TOTAL = LAT_DEGREES_TOTAL * STEPS_PER_DEGREE;
 
     //the number of arc-seconds per step
-    int ARCSECONDS_PER_STEP = ARCSECONDS_PER_DEGREE / STEPS_PER_DEGREE;
+    int TILE_SIZE = ARCSECONDS_PER_DEGREE / STEPS_PER_DEGREE;
+    int TILE_LIMIT = TILE_SIZE * TILE_SIZE * 4;
 
-    int GLOBCOVER_valuesPerDegree = 360;
-    int GLOBCOVER_minLatitude = -65;
-    int GLOBCOVER_maxLatitude = 90;
+    double PI = 3.141592653589793238462d;
 
-    int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+    int EARTH_RADIUS = 6_378_000;
+    int EARTH_CIRCUMFERENCE = floorI((EARTH_RADIUS << 1) * PI);
 
-    double spaceBetweenBlocks = 1.0d / 60.0d / 60.0d / 30.0d;
-    double spaceBetweenChunks = 16.0d / 60.0d / 60.0d / 30.0d;
+    double METERS_PER_ARCSECOND = (double) EARTH_CIRCUMFERENCE / (double) LON_ARCSECONDS_TOTAL;
 
     default void ensureDirExists(@NonNull File dir)   {
         if (!dir.exists() && !dir.mkdirs()) {
@@ -68,4 +72,28 @@ public interface Constants {
             }
         }
     }
+
+    /**
+     * Creates a new instance of {@link SoftCache}.
+     * <p>
+     * This simply allows not showing compile-time warnings for using internal classes when creating
+     * new instances.
+     *
+     * @param <K> the key type
+     * @param <V> the value type
+     * @return a new {@link SoftCache}
+     */
+    @SuppressWarnings("unchecked")
+    static <K, V> Map<K, V> newSoftCache() {
+        return (Map<K, V>) new SoftCache();
+    }
+
+
+    //some older values from way back when
+    int GLOBCOVER_valuesPerDegree = 360;
+    int GLOBCOVER_minLatitude = -65;
+    int GLOBCOVER_maxLatitude = 90;
+
+    double spaceBetweenBlocks = 1.0d / 60.0d / 60.0d / 30.0d;
+    double spaceBetweenChunks = 16.0d / 60.0d / 60.0d / 30.0d;
 }

@@ -2,6 +2,7 @@ package net.daporkchop.realmapcc.data.converter.dataset;
 
 import lombok.NonNull;
 import net.daporkchop.realmapcc.Constants;
+import net.daporkchop.realmapcc.data.Tile;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,4 +30,6 @@ public interface Dataset extends Constants {
     default int getTempStorageVersion() {
         return 1;
     }
+
+    void applyTo(@NonNull Tile tile);
 }
