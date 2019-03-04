@@ -60,6 +60,11 @@ public class DataConverter implements Constants, Logging {
     );
 
     public void start() throws IOException, InterruptedException {
+        if (true)   {
+            System.out.println(METERS_PER_ARCSECOND);
+            return;
+        }
+
         if (DATASET_VERSION_CACHE_FILE.exists()) {
             logger.debug("Loading dataset version cache...");
             try (ObjectInputStream in = new ObjectInputStream(DataIn.wrap(DATASET_VERSION_CACHE_FILE))) {

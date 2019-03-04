@@ -65,6 +65,8 @@ public interface Constants {
 
     double METERS_PER_ARCSECOND = (double) EARTH_CIRCUMFERENCE / (double) LON_ARCSECONDS_TOTAL;
 
+    double ARCSECONDS_PER_METER = (double) LON_ARCSECONDS_TOTAL / (double) EARTH_CIRCUMFERENCE;
+
     default void ensureDirExists(@NonNull File dir)   {
         if (!dir.exists() && !dir.mkdirs()) {
             throw new IllegalStateException(String.format("Couldn't create directory: %s", dir.getAbsolutePath()));
@@ -102,7 +104,4 @@ public interface Constants {
     int GLOBCOVER_valuesPerDegree = 360;
     int GLOBCOVER_minLatitude = -65;
     int GLOBCOVER_maxLatitude = 90;
-
-    double spaceBetweenBlocks = 1.0d / 60.0d / 60.0d / 30.0d;
-    double spaceBetweenChunks = 16.0d / 60.0d / 60.0d / 30.0d;
 }

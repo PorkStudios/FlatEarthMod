@@ -8,7 +8,6 @@ import net.daporkchop.realmapcc.Constants;
  * @author DaPorkchop_
  */
 @Getter
-@EqualsAndHashCode
 public class TilePos implements Constants {
     public static void validatePos(int degLon, int degLat, int tileLon, int tileLat) {
         if (degLon < LONGITUDE_MIN || degLon > LONGITUDE_MAX) {
@@ -48,5 +47,22 @@ public class TilePos implements Constants {
     @Override
     public String toString() {
         return String.format("%03d°%02d, %03d°%02d", this.degLon, this.tileLon, this.degLat, this.tileLat);
+    }
+
+    @Override
+    public int hashCode() {
+        return ((this.degLon * 1728083789 + this.tileLon) * 735562153 + this.degLat) * 1866811913 + this.tileLat;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)    {
+            return true;
+        } else if (obj instanceof TilePos)  {
+            TilePos other = (TilePos) obj;
+            return this.degLon == other.degLon && this.degLat == other.degLat && this.tileLon == other.tileLon && this.tileLat == other.tileLat;
+        } else {
+            return false;
+        }
     }
 }

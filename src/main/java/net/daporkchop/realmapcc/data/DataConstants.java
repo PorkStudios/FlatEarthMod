@@ -34,6 +34,17 @@ public interface DataConstants extends Constants {
         }
     }
 
+    static void loadImage(@NonNull byte[] data, @NonNull TileWrapperImage wrapper) throws IOException {
+        try {
+            BufferedImage img = Imaging.getBufferedImage(data, Collections.singletonMap(ImagingConstants.BUFFERED_IMAGE_FACTORY, new DelegatingBufferedImageFactory(wrapper)));
+            if (img != wrapper.getAsBufferedImage())    {
+                throw new IllegalStateException("Decoded image was not the same instance!");
+            }
+        } catch (ImageReadException e)  {
+            throw new IOException(e);
+        }
+    }
+
     @RequiredArgsConstructor
     @Getter
     class DelegatingBufferedImageFactory implements BufferedImageFactory    {

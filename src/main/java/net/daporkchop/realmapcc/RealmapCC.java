@@ -31,21 +31,6 @@ public class RealmapCC implements Constants {
     @Mod.Instance(MOD_ID)
     public static RealmapCC INSTANCE;
 
-    /*public static PorkDB<ChunkPos, CompactedHeightData> worldDataDB;
-
-    static {
-        Runtime.getRuntime().addShutdownHook(
-                new Thread("Realmap World Data DB Closer Thread") {
-                    @Override
-                    public void run() {
-                        if (worldDataDB != null) {
-                            worldDataDB.shutdown();
-                        }
-                    }
-                }
-        );
-    }*/
-
     public static File getWorkingFolder() {
         File toBeReturned;
         try {
@@ -63,32 +48,6 @@ public class RealmapCC implements Constants {
 
     @Mod.EventHandler
     public void construct(FMLConstructionEvent event) throws MalformedURLException {
-        ProgressManager.ProgressBar progressBar = ProgressManager.push("Preparing world data", 2);
-
-        progressBar.step("Fetching elevation data");
-        {
-            File rootData = new File(getWorkingFolder(), "realMap/worldData");
-            File dlComplete = new File(rootData, "comple.te");
-            if (!dlComplete.exists()) {
-                URL url = new URL("https://map.daporkchop.net/realWorld/map.zip");
-
-                //ProgressManager.ProgressBar dlBar = ProgressManager.push();
-            }
-        }
-
-        progressBar.step("Opening database");
-        /*worldDataDB = new DBBuilder<ChunkPos, CompactedHeightData>()
-                .setForceOpen(true)
-                .setFormat(DatabaseFormat.TREE)
-                .setKeyHasher(KeyHasherChunkPos.instance)
-                .setValueSerializer(CompactedHeightData.serializer)
-                //.setRootFolder(new File(getWorkingFolder(), "realMap/worldData"))
-                .setRootFolder(new File(rootDir, "worldData"))
-                .build();*/
-
-        ProgressManager.pop(progressBar);
-
-        System.out.println(this.getClass().getClassLoader().getClass().getCanonicalName());
     }
 
     @Mod.EventHandler
@@ -114,5 +73,11 @@ public class RealmapCC implements Constants {
 
         @Config.Comment("The scale multiplier for the vertical (Y) axis")
         public static double scaleVert = 1.0d;
+
+        @Config.Comment("The base URL of the server which will serve terrain data. Must end with a trailing slash. Don't touch this unless you know what you're doing!")
+        public static String dataBaseUrl = "https://cloud.daporkchop.net/minecraft/mods/realworldcc/data/";
+
+        @Config.Comment("The root directory in which terrain data will be cached. Don't touch this unless you know what you're doing!")
+        public static String dataCacheDir = "./realmapcc/data/";
     }
 }

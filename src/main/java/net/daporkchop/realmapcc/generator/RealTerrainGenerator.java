@@ -10,6 +10,7 @@ import io.github.opencubicchunks.cubicchunks.api.worldgen.populator.CubePopulato
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.capability.HeightsCapability;
 import net.daporkchop.realmapcc.capability.ITerrainHeightHolder;
+import net.daporkchop.realmapcc.data.client.DataProcessor;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
@@ -29,7 +30,8 @@ import java.util.Random;
  */
 public class RealTerrainGenerator implements ICubeGenerator, Constants {
     private final World world;
-    //private final SrtmHelperDB api = new SrtmHelperDB(RealmapCC.worldDataDB);
+
+    protected final DataProcessor processor = new DataProcessor();
 
     public RealTerrainGenerator(World world) {
         this.world = world;
@@ -41,7 +43,7 @@ public class RealTerrainGenerator implements ICubeGenerator, Constants {
         if (heightHolder == null) {
             throw new RuntimeException(String.format("Column (%d,%d) does not have the terrain height capability!", column.x, column.z));
         }
-        //heightHolder.setHeights(this.api.getDataForChunk(column.getPos()));
+        this.processor.prepare(column, heightHolder.getHeights());
         //TODO: set biomes
     }
 
