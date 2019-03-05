@@ -4,6 +4,9 @@ import lombok.NonNull;
 import net.daporkchop.lib.graphics.util.ImageInterpolator;
 import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
 import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
+import net.daporkchop.lib.math.vector.d.Vec2d;
+import net.daporkchop.lib.math.vector.i.Vec2i;
+import net.minecraft.util.math.BlockPos;
 import sun.misc.SoftCache;
 
 import java.io.File;
@@ -66,21 +69,12 @@ public interface Constants {
     double METERS_PER_ARCSECOND = (double) EARTH_CIRCUMFERENCE / (double) LON_ARCSECONDS_TOTAL;
 
     double ARCSECONDS_PER_METER = (double) LON_ARCSECONDS_TOTAL / (double) EARTH_CIRCUMFERENCE;
-
-    default void ensureDirExists(@NonNull File dir)   {
-        if (!dir.exists() && !dir.mkdirs()) {
-            throw new IllegalStateException(String.format("Couldn't create directory: %s", dir.getAbsolutePath()));
-        }
-    }
-
-    default void ensureFileExists(@NonNull File f) throws IOException {
-        if (!f.exists())    {
-            this.ensureDirExists(f.getParentFile());
-            if (!f.createNewFile()) {
-                throw new IllegalStateException(String.format("Couldn't create file: %s", f.getAbsolutePath()));
-            }
-        }
-    }
+    ImageInterpolator INTERPOLATOR_LINEAR = new ImageInterpolator(new LinearInterpolationEngine());
+    ImageInterpolator INTERPOLATOR_CUBIC = new ImageInterpolator(new CubicInterpolationEngine());
+    //some older values from way back when
+    int GLOBCOVER_valuesPerDegree = 360;
+    int GLOBCOVER_minLatitude = -65;
+    int GLOBCOVER_maxLatitude = 90;
 
     /**
      * Creates a new instance of {@link SoftCache}.
@@ -97,11 +91,27 @@ public interface Constants {
         return (Map<K, V>) new SoftCache();
     }
 
-    ImageInterpolator INTERPOLATOR_LINEAR = new ImageInterpolator(new LinearInterpolationEngine());
-    ImageInterpolator INTERPOLATOR_CUBIC = new ImageInterpolator(new CubicInterpolationEngine());
+    static int mod(int x, int n) {
+        int r = x % n;
+        return r < 0 ? r + n : r;
+        /*if (r < 0) {
+            r += n;
+        }
+        return r;*/
+    }
 
-    //some older values from way back when
-    int GLOBCOVER_valuesPerDegree = 360;
-    int GLOBCOVER_minLatitude = -65;
-    int GLOBCOVER_maxLatitude = 90;
+    default void ensureDirExists(@NonNull File dir) {
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IllegalStateException(String.format("Couldn't create directory: %s", dir.getAbsolutePath()));
+        }
+    }
+
+    default void ensureFileExists(@NonNull File f) throws IOException {
+        if (!f.exists()) {
+            this.ensureDirExists(f.getParentFile());
+            if (!f.createNewFile()) {
+                throw new IllegalStateException(String.format("Couldn't create file: %s", f.getAbsolutePath()));
+            }
+        }
+    }
 }

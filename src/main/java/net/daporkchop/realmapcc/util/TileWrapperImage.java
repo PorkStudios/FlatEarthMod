@@ -146,6 +146,18 @@ public class TileWrapperImage implements PImage, Constants {
         public boolean isCompatibleSampleModel(SampleModel sm) {
             return sm instanceof LargerSinglePixelPackedSampleModel;
         }
+
+        @Override
+        public Object getDataElements(int rgb, Object pixel) {
+            int[] i;
+            if (pixel instanceof int[]) {
+                i = (int[]) pixel;
+            } else {
+                i = new int[1];
+            }
+            i[0] = rgb;
+            return i;
+        }
     }
     /*protected class FastRGBColorModel extends DirectColorModel   {
         public FastRGBColorModel()  {

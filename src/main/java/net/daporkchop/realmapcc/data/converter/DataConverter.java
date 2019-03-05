@@ -11,12 +11,14 @@ import net.daporkchop.lib.graphics.impl.image.DirectImage;
 import net.daporkchop.lib.hash.util.Digest;
 import net.daporkchop.lib.http.SimpleHTTP;
 import net.daporkchop.lib.logging.Logging;
+import net.daporkchop.lib.math.vector.d.Vec2d;
 import net.daporkchop.lib.math.vector.i.Vec2i;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
+import net.daporkchop.realmapcc.util.CoordUtils;
 import net.daporkchop.realmapcc.util.TileWrapperImage;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
@@ -61,7 +63,10 @@ public class DataConverter implements Constants, Logging {
 
     public void start() throws IOException, InterruptedException {
         if (true)   {
-            System.out.println(METERS_PER_ARCSECOND);
+            System.out.println(CoordUtils.globalToBlock(new Vec2d(0.0d, 0.0d)));
+            System.out.println(CoordUtils.globalToBlock(new Vec2d(8.0d, 47.0d)));
+            System.out.println(CoordUtils.blockToGlobal(new Vec2i(0, 0)));
+            System.out.println(CoordUtils.blockToGlobal(new Vec2i(1000, 1000)));
             return;
         }
 
@@ -115,8 +120,15 @@ public class DataConverter implements Constants, Logging {
         Vec2i[] positions = new Vec2i[DEGREE_SEGMENTS];
         {
             int i = 0;
+            positions[i++] = new Vec2i(8, 47);
             for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
+                if (y == 47) {
+                    continue;
+                }
                 for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
+                    if (x == 8)    {
+                        continue;
+                    }
                     positions[i++] = new Vec2i(x, y);
                 }
             }

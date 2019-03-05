@@ -42,10 +42,12 @@ public class LookupGrid2d implements Grid2d, Constants {
         Tile tile = this.lookup.getTile(
                 x / ARCSECONDS_PER_DEGREE,
                 y / ARCSECONDS_PER_DEGREE,
-                (x / TILE_SIZE) % STEPS_PER_DEGREE,
-                (y / TILE_SIZE) % STEPS_PER_DEGREE
+                Constants.mod(x / TILE_SIZE, STEPS_PER_DEGREE),
+                Constants.mod(y / TILE_SIZE, STEPS_PER_DEGREE)
+                /*(x / TILE_SIZE) % STEPS_PER_DEGREE,
+                (y / TILE_SIZE) % STEPS_PER_DEGREE*/
         );
-        return tile.getHeight(x % TILE_SIZE, y % TILE_SIZE);
+        return tile.getHeight(Constants.mod(x, TILE_SIZE), Constants.mod(y, TILE_SIZE));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package net.daporkchop.realmapcc.data.client;
 
 import lombok.NonNull;
+import net.daporkchop.lib.math.arrays.grid.Grid2d;
 import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
 import net.daporkchop.lib.math.interpolation.InterpolationEngine;
 import net.daporkchop.realmapcc.Constants;
@@ -27,8 +28,24 @@ public class DataProcessor implements Constants {
     public void prepare(@NonNull Chunk column, @NonNull short[] heights)    {
         int colX = column.x << 4;
         int colZ = column.z << 4;
-        double lon = (colX / METERS_PER_ARCSECOND) * RealmapCC.Conf.scaleHoriz * ARCSECONDS_PER_DEGREE;
-        double lat = (colZ / METERS_PER_ARCSECOND) * RealmapCC.Conf.scaleHoriz * ARCSECONDS_PER_DEGREE;
+        double lon = (colX / METERS_PER_ARCSECOND) * RealmapCC.Conf.scaleHoriz;
+        double lat = (colZ / METERS_PER_ARCSECOND) * RealmapCC.Conf.scaleHoriz;
+
+        /*int tileLon = floorI(lon / TILE_SIZE);
+        int tileLat = floorI(lat / TILE_SIZE);
+        int degLon = tileLon / STEPS_PER_DEGREE;
+        int degLat = tileLat / STEPS_PER_DEGREE;
+        tileLon %= STEPS_PER_DEGREE;
+        tileLat %= STEPS_PER_DEGREE;
+        int subLon = floorI(lon) % TILE_SIZE;
+        int subLat = floorI(lat) % TILE_SIZE;
+
+        Grid2d grid = Grid2d.of(
+                degLon * ARCSECONDS_PER_DEGREE + tileLon * STEPS_PER_DEGREE + subLon,
+                degLat * ARCSECONDS_PER_DEGREE + tileLat * STEPS_PER_DEGREE + subLat,
+                6, 6
+        );*/
+
         for (int x = 15; x >= 0; x--)   {
             for (int z = 15; z >= 0; z--)   {
                 heights[(x << 4) | z] = (short) floorI(this.engine.getInterpolated(lon + x * ARCSECONDS_PER_METER, lat + z * ARCSECONDS_PER_METER, this.grid));

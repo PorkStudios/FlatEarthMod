@@ -62,7 +62,7 @@ public interface DataConstants extends Constants {
 
         @Override
         public BufferedImage getGrayscaleBufferedImage(int width, int height, boolean hasAlpha) {
-            throw new UnsupportedOperationException();
+            return this.getColorBufferedImage(width, height, hasAlpha);
         }
     }
 }
