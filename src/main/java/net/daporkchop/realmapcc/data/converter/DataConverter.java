@@ -62,7 +62,7 @@ public class DataConverter implements Constants, Logging {
     );
 
     public void start() throws IOException, InterruptedException {
-        if (true)   {
+        if (false)   {
             System.out.println(CoordUtils.globalToBlock(new Vec2d(0.0d, 0.0d)));
             System.out.println(CoordUtils.globalToBlock(new Vec2d(8.0d, 47.0d)));
             System.out.println(CoordUtils.blockToGlobal(new Vec2i(0, 0)));
@@ -122,11 +122,8 @@ public class DataConverter implements Constants, Logging {
             int i = 0;
             positions[i++] = new Vec2i(8, 47);
             for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
-                if (y == 47) {
-                    continue;
-                }
                 for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
-                    if (x == 8)    {
+                    if (x == 8 && y == 47)    {
                         continue;
                     }
                     positions[i++] = new Vec2i(x, y);

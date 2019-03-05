@@ -1,16 +1,21 @@
 package net.daporkchop.realmapcc;
 
 import net.daporkchop.realmapcc.capability.HeightsCapability;
+import net.daporkchop.realmapcc.command.CommandTPR;
 import net.daporkchop.realmapcc.generator.RealWorldType;
 import net.minecraft.client.Minecraft;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ProgressManager;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
+import net.minecraftforge.fml.common.event.FMLEvent;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -30,6 +35,8 @@ public class RealmapCC implements Constants {
 
     @Mod.Instance(MOD_ID)
     public static RealmapCC INSTANCE;
+
+    public static Logger logger;
 
     public static File getWorkingFolder() {
         File toBeReturned;
@@ -52,10 +59,14 @@ public class RealmapCC implements Constants {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        logger = event.getModLog();
+
         //GeneratorSettingsFix.addFixableWorldType(new RealWorldType());
         new RealWorldType();
 
         HeightsCapability.register();
+
+        MinecraftForge.EVENT_BUS.register(new Events());
     }
 
     @Mod.EventHandler
@@ -64,6 +75,11 @@ public class RealmapCC implements Constants {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+    }
+
+    @Mod.EventHandler
+    public void serverStarting(FMLServerStartingEvent event)    {
+        event.registerServerCommand(new CommandTPR());
     }
 
     @Config(modid = MOD_ID)

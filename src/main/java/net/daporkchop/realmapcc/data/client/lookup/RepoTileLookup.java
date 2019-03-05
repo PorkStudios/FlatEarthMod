@@ -18,7 +18,9 @@ public class RepoTileLookup implements TileLookup {
     public Tile getTile(@NonNull TilePos pos) {
         Tile tile = new Tile();
         try {
-            byte[] b = SimpleHTTP.get(String.format("%s%s", RealmapCC.Conf.dataBaseUrl, pos.getSubpath()));
+            String url = String.format("%s%s", RealmapCC.Conf.dataBaseUrl, pos.getSubpath());
+            RealmapCC.logger.debug(String.format("Downloading tile: %s", url));
+            byte[] b = SimpleHTTP.get(url);
             DataConstants.loadImage(b, tile.getWrapper());
         } catch (IOException e) {
             throw new RuntimeException(e);
