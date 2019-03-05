@@ -19,7 +19,11 @@ public class RepoTileLookup implements TileLookup {
         Tile tile = new Tile();
         try {
             String url = String.format("%s%s", RealmapCC.Conf.dataBaseUrl, pos.getSubpath());
-            RealmapCC.logger.debug(String.format("Downloading tile: %s", url));
+            if (RealmapCC.logger == null) {
+                System.out.printf("Downloading tile: %s\n", url);
+            } else {
+                RealmapCC.logger.debug(String.format("Downloading tile: %s", url));
+            }
             byte[] b = SimpleHTTP.get(url);
             DataConstants.loadImage(b, tile.getWrapper());
         } catch (IOException e) {

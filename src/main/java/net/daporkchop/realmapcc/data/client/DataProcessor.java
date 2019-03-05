@@ -1,5 +1,6 @@
 package net.daporkchop.realmapcc.data.client;
 
+import lombok.Getter;
 import lombok.NonNull;
 import net.daporkchop.lib.math.arrays.grid.Grid2d;
 import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
@@ -19,15 +20,16 @@ import static net.daporkchop.lib.math.primitive.PMath.floorI;
 /**
  * @author DaPorkchop_
  */
+@Getter
 public class DataProcessor implements Constants {
     protected final TileLookup tileLookup = new CachedTileLookup().setDelegate(new DiskTileCache(new File(RealmapCC.Conf.dataCacheDir)).setDelegate(new RepoTileLookup()));
 
     protected final InterpolationEngine engine = new CubicInterpolationEngine();
     protected final LookupGrid2d grid = new LookupGrid2d(this.tileLookup);
 
-    public void prepare(@NonNull Chunk column, @NonNull short[] heights)    {
-        int colX = column.x << 4;
-        int colZ = column.z << 4;
+    public void prepare(int chunkX, int chunkZ, @NonNull short[] heights)    {
+        int colX = chunkX << 4;
+        int colZ = chunkZ << 4;
         double lon = (colX / METERS_PER_ARCSECOND) * RealmapCC.Conf.scaleHoriz;
         double lat = (colZ / METERS_PER_ARCSECOND) * RealmapCC.Conf.scaleHoriz;
 

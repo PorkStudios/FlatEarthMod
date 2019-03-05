@@ -91,8 +91,8 @@ public interface Constants {
         return (Map<K, V>) new SoftCache();
     }
 
-    static int mod(int x, int n) {
-        int r = x % n;
+    static int mod(int i, int n) {
+        int r = i % n;
         return r < 0 ? r + n : r;
         /*if (r < 0) {
             r += n;

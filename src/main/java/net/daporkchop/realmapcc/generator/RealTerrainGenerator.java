@@ -44,7 +44,7 @@ public class RealTerrainGenerator implements ICubeGenerator, Constants {
             throw new RuntimeException(String.format("Column (%d,%d) does not have the terrain height capability!", column.x, column.z));
         }
         heightHolder.setHeights(new short[16 * 16]);
-        this.processor.prepare(column, heightHolder.getHeights());
+        this.processor.prepare(column.x, column.z, heightHolder.getHeights());
         //TODO: set biomes
     }
 

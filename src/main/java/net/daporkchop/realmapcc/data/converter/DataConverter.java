@@ -11,11 +11,14 @@ import net.daporkchop.lib.graphics.impl.image.DirectImage;
 import net.daporkchop.lib.hash.util.Digest;
 import net.daporkchop.lib.http.SimpleHTTP;
 import net.daporkchop.lib.logging.Logging;
+import net.daporkchop.lib.math.arrays.grid.Grid2d;
 import net.daporkchop.lib.math.vector.d.Vec2d;
 import net.daporkchop.lib.math.vector.i.Vec2i;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
+import net.daporkchop.realmapcc.data.client.DataProcessor;
+import net.daporkchop.realmapcc.data.client.LookupGrid2d;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
 import net.daporkchop.realmapcc.util.CoordUtils;
@@ -109,11 +112,11 @@ public class DataConverter implements Constants, Logging {
 
         //generate the data in image form
         logger.info("Nuking output root (parallel!)...");
-        if (OUTPUT_FILE_ROOT.exists()) {
+        if (false && OUTPUT_FILE_ROOT.exists()) {
             //parallel deletion of output dirs
             Stream.of(OUTPUT_FILE_ROOT.listFiles()).parallel().forEach(PorkUtil::rm);
+            PorkUtil.rm(OUTPUT_FILE_ROOT);
         }
-        PorkUtil.rm(OUTPUT_FILE_ROOT);
         this.ensureDirExists(OUTPUT_FILE_ROOT);
         logger.info("All files in output dir removed.");
 
@@ -121,12 +124,22 @@ public class DataConverter implements Constants, Logging {
         {
             int i = 0;
             positions[i++] = new Vec2i(8, 47);
-            for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
-                for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
-                    if (x == 8 && y == 47)    {
-                        continue;
+            if (true) {
+                for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
+                    for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
+                        if (x == 8 && y == 47) {
+                            continue;
+                        }
+                        positions[i++] = new Vec2i(x, y);
                     }
-                    positions[i++] = new Vec2i(x, y);
+                }
+            } else if (false)    {
+                for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
+                    for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
+                        if (x == 8 || y == 47) {
+                            positions[i++] = new Vec2i(x, y);
+                        }
+                    }
                 }
             }
         }
@@ -158,7 +171,9 @@ public class DataConverter implements Constants, Logging {
             new Thread(null, () -> {
                 int next;
                 while ((next = counter.getAndIncrement()) < DEGREE_SEGMENTS) {
-                    consumer.accept(next, positions[next]);
+                    if (positions[next] != null) {
+                        consumer.accept(next, positions[next]);
+                    }
                 }
             }, String.format("RealWorldCC data converter #%d", i)).start();
         }

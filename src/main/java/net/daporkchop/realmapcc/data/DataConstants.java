@@ -5,7 +5,9 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.util.TileWrapperImage;
+import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.common.BufferedImageFactory;
@@ -30,7 +32,12 @@ public interface DataConstants extends Constants {
                 throw new IllegalStateException("Decoded image was not the same instance!");
             }
         } catch (ImageReadException e)  {
-            throw new IOException(e);
+            wrapper.getTile().clear();
+            try {
+                Imaging.writeImage(wrapper.getAsBufferedImage(), file, ImageFormats.PNG, null);
+            } catch (IOException | ImageWriteException e1) {
+                throw new IOException(file.getAbsolutePath(), e1);
+            }
         }
     }
 
