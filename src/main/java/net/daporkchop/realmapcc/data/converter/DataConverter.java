@@ -11,14 +11,11 @@ import net.daporkchop.lib.graphics.impl.image.DirectImage;
 import net.daporkchop.lib.hash.util.Digest;
 import net.daporkchop.lib.http.SimpleHTTP;
 import net.daporkchop.lib.logging.Logging;
-import net.daporkchop.lib.math.arrays.grid.Grid2d;
 import net.daporkchop.lib.math.vector.d.Vec2d;
 import net.daporkchop.lib.math.vector.i.Vec2i;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
-import net.daporkchop.realmapcc.data.client.DataProcessor;
-import net.daporkchop.realmapcc.data.client.LookupGrid2d;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
 import net.daporkchop.realmapcc.util.CoordUtils;
@@ -34,8 +31,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -65,7 +64,7 @@ public class DataConverter implements Constants, Logging {
     );
 
     public void start() throws IOException, InterruptedException {
-        if (false)   {
+        if (false) {
             System.out.println(CoordUtils.globalToBlock(new Vec2d(0.0d, 0.0d)));
             System.out.println(CoordUtils.globalToBlock(new Vec2d(8.0d, 47.0d)));
             System.out.println(CoordUtils.blockToGlobal(new Vec2i(0, 0)));
@@ -122,23 +121,26 @@ public class DataConverter implements Constants, Logging {
 
         Vec2i[] positions = new Vec2i[DEGREE_SEGMENTS];
         {
+            Set<Vec2i> verification = new HashSet<>();
             int i = 0;
-            positions[i++] = new Vec2i(8, 47);
-            if (true) {
-                for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
-                    for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
-                        if (x == 8 && y == 47) {
-                            continue;
-                        }
-                        positions[i++] = new Vec2i(x, y);
-                    }
+
+            int priorityStartLon = 6;
+            int priorityEndLon = 9;
+            int priorityStartLat = 45;
+            int priorityEndLat = 48;
+            for (int x = priorityStartLon; x <= priorityEndLon; x++)    {
+                for (int y = priorityStartLat; y <= priorityEndLat; y++)    {
+                    verification.add(positions[i++] = new Vec2i(x, y));
                 }
-            } else if (false)    {
-                for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
-                    for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
-                        if (x == 8 || y == 47) {
-                            positions[i++] = new Vec2i(x, y);
-                        }
+            }
+
+            for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
+                for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
+                    if (x >= priorityStartLon && x <= priorityEndLon && y >= priorityStartLat && y <= priorityEndLat) {
+                        continue;
+                    }
+                    if (!verification.add(positions[i++] = new Vec2i(x, y))) {
+                        throw new IllegalStateException(String.format("Position %d,%d already present!", x, y));
                     }
                 }
             }

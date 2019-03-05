@@ -6,8 +6,15 @@ import net.daporkchop.lib.graphics.impl.image.DirectImage;
 import net.daporkchop.lib.math.arrays.grid.Grid2d;
 import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
 import net.daporkchop.lib.math.interpolation.InterpolationEngine;
+import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.RealmapCC;
+import org.apache.commons.imaging.ImageFormats;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.Imaging;
+
+import java.io.File;
+import java.io.IOException;
 
 import static net.daporkchop.lib.math.primitive.PMath.floorI;
 
@@ -15,29 +22,28 @@ import static net.daporkchop.lib.math.primitive.PMath.floorI;
  * @author DaPorkchop_
  */
 public class TestThing implements Constants {
-    public static void main(String... args) {
+    public static void main(String... args) throws IOException, ImageWriteException {
         if (true)   {
             RealmapCC.Conf.dataCacheDir = "/home/daporkchop/192.168.1.119/Public/minecraft/mods/realworldcc/data/";
         }
 
         if (true)   {
             Grid2d grid = new DataProcessor().getGrid();
-            InterpolationEngine engine = new CubicInterpolationEngine();
+            InterpolationEngine engine = new LinearInterpolationEngine();
 
-            double hMult = 0.5d;
-            int w = 1600;
+            int w = 1024;
+            double hMult = 1.0d;
 
             int h = floorI(w * hMult);
-            double scaleBase = 6.0d;
-            double scaleX = 1.0d / w * scaleBase;
-            double scaleY = 1.0d / h * scaleBase * hMult;
+            double scaleBase = 4.0d;
+            double scale = 1.0d / w * scaleBase;
 
             PImage img = new DirectImage(w, h, true);
             Grid2d otherGrid = Grid2d.of(w, h, true);
 
             for (int x = w - 1; x >= 0; x--) {
                 for (int y = h - 1; y >= 0; y--) {
-                    double height = engine.getInterpolated((5.0d + x * scaleX) * ARCSECONDS_PER_DEGREE, (43.0d + y * scaleY) * ARCSECONDS_PER_DEGREE, grid);
+                    double height = engine.getInterpolated((5.0d + x * scale) * ARCSECONDS_PER_DEGREE, (45.0d + y * scale) * ARCSECONDS_PER_DEGREE, grid);
                     /*if (height > 5) {
                         img.setARGB(x, y, 0xFFFFFFFF);
                     } else {
@@ -64,11 +70,12 @@ public class TestThing implements Constants {
 
             for (int x = w - 1; x >= 0; x--) {
                 for (int y = h - 1; y >= 0; y--) {
-                    img.setBW(x, y, (otherGrid.getI(x, y) - min) * 256 / max);
+                    img.setBW(x, h - 1 - y, (otherGrid.getI(x, y) - min) * 256 / max);
                 }
             }
 
             PorkUtil.simpleDisplayImage(img.getAsBufferedImage(), true);
+            //Imaging.writeImage(img.getAsBufferedImage(), new File("./cool.png"), ImageFormats.PNG, null);
         }
     }
 }

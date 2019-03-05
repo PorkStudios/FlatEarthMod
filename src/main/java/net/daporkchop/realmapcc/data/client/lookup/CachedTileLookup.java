@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class CachedTileLookup extends AbstractTileLookup<CachedTileLookup> {
     protected final LoadingCache<TilePos, Tile> cache = CacheBuilder.newBuilder()
             .expireAfterAccess(1L, TimeUnit.MINUTES)
-            .maximumSize(4096L)
+            .maximumSize(2048L)
             .build(new CacheLoader<TilePos, Tile>() {
                 @Override
                 public Tile load(@NonNull TilePos key) throws Exception {

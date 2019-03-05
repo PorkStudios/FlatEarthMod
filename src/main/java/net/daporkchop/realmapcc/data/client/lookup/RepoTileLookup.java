@@ -27,9 +27,18 @@ public class RepoTileLookup implements TileLookup {
             byte[] b = SimpleHTTP.get(url);
             DataConstants.loadImage(b, tile.getWrapper());
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            return tile;
+            String msg = String.format("Couldn't find tile: %s", pos);
+            if (RealmapCC.Conf.failIfTileNotFound)  {
+                throw new IllegalStateException(msg, e);
+            } else {
+                if (RealmapCC.logger == null) {
+                    System.out.println(msg);
+                } else {
+                    RealmapCC.logger.error(msg);
+                }
+                tile.clear();
+            }
         }
+        return tile;
     }
 }
