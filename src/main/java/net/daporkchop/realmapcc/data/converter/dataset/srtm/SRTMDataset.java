@@ -35,6 +35,7 @@ public class SRTMDataset implements Dataset {
 
     protected final LoadingCache<Vec2i, ByteBuffer> regionCache = CacheBuilder.newBuilder()
             .expireAfterAccess(1L, TimeUnit.MINUTES)
+            .maximumSize(CPU_COUNT * 3L)
             .removalListener((RemovalListener<Vec2i, ByteBuffer>) notification -> PorkUtil.release(notification.getValue()))
             .build(new CacheLoader<Vec2i, ByteBuffer>() {
                 @Override

@@ -7,6 +7,7 @@ import net.daporkchop.lib.math.arrays.grid.Grid2d;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.client.lookup.TileLookup;
+import net.daporkchop.realmapcc.util.LookupCalculator;
 
 /**
  * @author DaPorkchop_
@@ -16,6 +17,8 @@ import net.daporkchop.realmapcc.data.client.lookup.TileLookup;
 public class LookupGrid2d implements Grid2d, Constants {
     @NonNull
     protected final TileLookup lookup;
+    @NonNull
+    protected final LookupCalculator calculator;
 
     @Override
     public int startX() {
@@ -45,7 +48,7 @@ public class LookupGrid2d implements Grid2d, Constants {
                 Constants.mod(x / TILE_SIZE, STEPS_PER_DEGREE),
                 Constants.mod(y / TILE_SIZE, STEPS_PER_DEGREE)
         );
-        return tile.getHeight(Constants.mod(x, TILE_SIZE), Constants.mod(y, TILE_SIZE));
+        return this.calculator.apply(tile, Constants.mod(x, TILE_SIZE), Constants.mod(y, TILE_SIZE));
     }
 
     @Override

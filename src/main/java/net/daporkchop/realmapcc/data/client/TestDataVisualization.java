@@ -4,16 +4,12 @@ import net.daporkchop.lib.common.util.PorkUtil;
 import net.daporkchop.lib.graphics.PImage;
 import net.daporkchop.lib.graphics.impl.image.DirectImage;
 import net.daporkchop.lib.math.arrays.grid.Grid2d;
-import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
 import net.daporkchop.lib.math.interpolation.InterpolationEngine;
 import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.RealmapCC;
-import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.ImageWriteException;
-import org.apache.commons.imaging.Imaging;
 
-import java.io.File;
 import java.io.IOException;
 
 import static net.daporkchop.lib.math.primitive.PMath.floorI;
@@ -21,16 +17,18 @@ import static net.daporkchop.lib.math.primitive.PMath.floorI;
 /**
  * @author DaPorkchop_
  */
-public class TestThing implements Constants {
+public class TestDataVisualization implements Constants {
     public static void main(String... args) throws IOException, ImageWriteException {
         if (true)   {
             RealmapCC.Conf.dataCacheDir = "/home/daporkchop/192.168.1.119/Public/minecraft/mods/realworldcc/data/";
+            RealmapCC.Conf.maxTileCacheSize = 2048L;
         }
 
         if (true)   {
-            Grid2d grid = new DataProcessor().getGrid();
+            Grid2d grid = new DataProcessor().getHeightGrid();
             InterpolationEngine engine = new LinearInterpolationEngine();
 
+            //centered precisely on Switzerland!
             double minLon = 5.0d;
             double maxLat = 48.0d;
             int w = 1024;

@@ -26,6 +26,10 @@ import java.io.IOException;
 public class Tile implements Constants {
     public static final int HEIGHT_SHIFT = 1;
     public static final int HEIGHT_MASK = 0x7FFE;
+    public static final int WATER_SHIFT = 15;
+    public static final int WATER_MASK = 0x8000;
+    public static final int BIOME_SHIFT = 16;
+    public static final int BIOME_MASK = 0x7F0000;
 
     protected int degLon = Integer.MIN_VALUE;
     protected int degLat = Integer.MIN_VALUE;
@@ -73,6 +77,22 @@ public class Tile implements Constants {
     public void setHeight(int x, int y, int height) {
         this.setRawHeight(x, y, height);
         this.setIsHeightSigned(x, y, height < 0); //TODO: optimize this a LOT by inlining after i've made sure other functions work
+    }
+
+    public boolean isWater(int x, int y) {
+        return (this.getRawVal(x, y) & WATER_MASK) != 0;
+    }
+
+    public void setWater(int x, int y, boolean val) {
+        this.setRawVal(x, y, (this.getRawVal(x, y) & ~WATER_MASK) | (val ? WATER_MASK : 0));
+    }
+
+    public int getBiome(int x, int y) {
+        return (this.getRawVal(x, y) & BIOME_MASK) >>> BIOME_SHIFT;
+    }
+
+    public void setBiome(int x, int y, int val) {
+        this.setRawVal(x, y, (this.getRawVal(x, y) & ~BIOME_MASK) | ((val << BIOME_SHIFT) & BIOME_MASK));
     }
 
     public void clear() {

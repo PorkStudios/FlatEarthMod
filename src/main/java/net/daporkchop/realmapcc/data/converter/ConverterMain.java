@@ -19,6 +19,7 @@ import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMEngine;
+import net.daporkchop.realmapcc.data.converter.dataset.water.eu.EUWaterDataset;
 import net.daporkchop.realmapcc.util.CoordUtils;
 import net.daporkchop.realmapcc.util.TileWrapperImage;
 import org.apache.commons.imaging.ImageFormats;
@@ -54,7 +55,8 @@ public class ConverterMain implements Constants, Logging {
     public static final File OUTPUT_FILE_ROOT = new File("/home/daporkchop/192.168.1.119/Public/minecraft/mods/realworldcc/data/");
 
     //dataset paths
-    public static final File SRTM_ROOT = new File("/home/daporkchop/192.168.1.119/Misc/HeightmapData/SRTMGL1");
+    public static final File SRTM_ROOT = new File("/home/daporkchop/192.168.1.119/Misc/HeightmapData/SRTMGL1/");
+    public static final File EU_WATER_ROOT = new File("/home/daporkchop/192.168.1.119/Misc/GlobalData/WaterCover/EU/extent/");
 
     public static void main(String... args) throws IOException, InterruptedException {
         logger.add(new File("./converter.log"), true);
@@ -65,6 +67,7 @@ public class ConverterMain implements Constants, Logging {
     protected List<Dataset> datasets = Stream.of(
             (Dataset) null
             , new SRTMDataset(SRTM_ROOT, new SRTMEngine(ARCSECONDS_PER_DEGREE)) //SRTMGL1
+            , new EUWaterDataset(EU_WATER_ROOT) //EU water extent data
     ).filter(Objects::nonNull).collect(Collectors.toList());
 
     public void start(boolean fast) throws IOException, InterruptedException {

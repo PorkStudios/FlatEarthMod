@@ -6,6 +6,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import lombok.Getter;
 import lombok.NonNull;
+import net.daporkchop.realmapcc.RealmapCC;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.TilePos;
 
@@ -17,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 @Getter
 public class CachedTileLookup extends AbstractTileLookup<CachedTileLookup> {
     protected final LoadingCache<TilePos, Tile> cache = CacheBuilder.newBuilder()
-            .expireAfterAccess(1L, TimeUnit.MINUTES)
-            .maximumSize(2048L)
+            .expireAfterAccess(5L, TimeUnit.MINUTES)
+            .maximumSize(RealmapCC.Conf.maxTileCacheSize)
             .build(new CacheLoader<TilePos, Tile>() {
                 @Override
                 public Tile load(@NonNull TilePos key) throws Exception {

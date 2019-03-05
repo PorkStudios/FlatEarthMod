@@ -110,6 +110,13 @@ public class RealmapCC implements Constants {
         public static boolean failIfTileNotFound = false;
 
         @Config.Comment({
+                "The maximum number of tiles to keep cached in memory at once.",
+                "Each tile is about 220kb once fully loaded, so keep this in mind when configuring this value.",
+                "Setting this too low can lead to horrible performance."
+        })
+        public static long maxTileCacheSize = 256L;
+
+        @Config.Comment({
                 "The base URL of the server from which will terrain data will be obtained.",
                 "Must end with a trailing slash.",
                 "Don't touch this unless you know what you're doing!"
