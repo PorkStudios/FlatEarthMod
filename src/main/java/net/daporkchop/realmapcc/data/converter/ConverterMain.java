@@ -18,6 +18,7 @@ import net.daporkchop.realmapcc.data.DataConstants;
 import net.daporkchop.realmapcc.data.Tile;
 import net.daporkchop.realmapcc.data.converter.dataset.Dataset;
 import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMDataset;
+import net.daporkchop.realmapcc.data.converter.dataset.srtm.SRTMEngine;
 import net.daporkchop.realmapcc.util.CoordUtils;
 import net.daporkchop.realmapcc.util.TileWrapperImage;
 import org.apache.commons.imaging.ImageFormats;
@@ -34,9 +35,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static net.daporkchop.lib.math.primitive.PMath.clamp;
@@ -45,7 +48,7 @@ import static net.daporkchop.lib.math.primitive.PMath.clamp;
  * @author DaPorkchop_
  */
 @SuppressWarnings("unchecked")
-public class DataConverter implements Constants, Logging {
+public class ConverterMain implements Constants, Logging {
     //misc paths
     public static final File DATASET_VERSION_CACHE_FILE = new File("./data/versions.dat");
     public static final File OUTPUT_FILE_ROOT = new File("/home/daporkchop/192.168.1.119/Public/minecraft/mods/realworldcc/data/");
@@ -55,15 +58,16 @@ public class DataConverter implements Constants, Logging {
 
     public static void main(String... args) throws IOException, InterruptedException {
         logger.add(new File("./converter.log"), true);
-        new DataConverter().start();
+        new ConverterMain().start(args.length >= 1 && "fast".equals(args[0]));
     }
 
     protected Map<String, AtomicInteger> datasetVersionCache = new HashMap<>();
-    protected List<Dataset> datasets = Arrays.asList(
-            new SRTMDataset(SRTM_ROOT)
-    );
+    protected List<Dataset> datasets = Stream.of(
+            (Dataset) null
+            , new SRTMDataset(SRTM_ROOT, new SRTMEngine(ARCSECONDS_PER_DEGREE)) //SRTMGL1
+    ).filter(Objects::nonNull).collect(Collectors.toList());
 
-    public void start() throws IOException, InterruptedException {
+    public void start(boolean fast) throws IOException, InterruptedException {
         if (false) {
             System.out.println(CoordUtils.globalToBlock(new Vec2d(0.0d, 0.0d)));
             System.out.println(CoordUtils.globalToBlock(new Vec2d(8.0d, 47.0d)));
@@ -110,24 +114,26 @@ public class DataConverter implements Constants, Logging {
         }
 
         //generate the data in image form
-        logger.info("Nuking output root (parallel!)...");
-        if (false && OUTPUT_FILE_ROOT.exists()) {
-            //parallel deletion of output dirs
-            Stream.of(OUTPUT_FILE_ROOT.listFiles()).parallel().forEach(PorkUtil::rm);
+        if (!fast) {
+            logger.info("Nuking output root (parallel!)...");
+            if (OUTPUT_FILE_ROOT.exists()) {
+                //parallel deletion of output dirs
+                Stream.of(OUTPUT_FILE_ROOT.listFiles()).parallel().forEach(PorkUtil::rm);
+            }
             PorkUtil.rm(OUTPUT_FILE_ROOT);
+            logger.info("All files in output dir removed.");
         }
         this.ensureDirExists(OUTPUT_FILE_ROOT);
-        logger.info("All files in output dir removed.");
 
         Vec2i[] positions = new Vec2i[DEGREE_SEGMENTS];
         {
             Set<Vec2i> verification = new HashSet<>();
             int i = 0;
 
-            int priorityStartLon = 6;
-            int priorityEndLon = 9;
+            int priorityStartLon = 5;
             int priorityStartLat = 45;
-            int priorityEndLat = 48;
+            int priorityEndLon = 10;
+            int priorityEndLat = 47;
             for (int x = priorityStartLon; x <= priorityEndLon; x++)    {
                 for (int y = priorityStartLat; y <= priorityEndLat; y++)    {
                     verification.add(positions[i++] = new Vec2i(x, y));
@@ -136,7 +142,7 @@ public class DataConverter implements Constants, Logging {
 
             for (int y = LATITUDE_MIN; y <= LATITUDE_MAX; y++) {
                 for (int x = LONGITUDE_MIN; x <= LONGITUDE_MAX; x++) {
-                    if (x >= priorityStartLon && x <= priorityEndLon && y >= priorityStartLat && y <= priorityEndLat) {
+                    if (fast || (x >= priorityStartLon && x <= priorityEndLon && y >= priorityStartLat && y <= priorityEndLat)) {
                         continue;
                     }
                     if (!verification.add(positions[i++] = new Vec2i(x, y))) {

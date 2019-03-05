@@ -31,11 +31,13 @@ public class TestThing implements Constants {
             Grid2d grid = new DataProcessor().getGrid();
             InterpolationEngine engine = new LinearInterpolationEngine();
 
+            double minLon = 5.0d;
+            double maxLat = 48.0d;
             int w = 1024;
-            double hMult = 1.0d;
+            double hMult = 3.0d / 5.0d;
 
             int h = floorI(w * hMult);
-            double scaleBase = 4.0d;
+            double scaleBase = 5.0d;
             double scale = 1.0d / w * scaleBase;
 
             PImage img = new DirectImage(w, h, true);
@@ -43,7 +45,7 @@ public class TestThing implements Constants {
 
             for (int x = w - 1; x >= 0; x--) {
                 for (int y = h - 1; y >= 0; y--) {
-                    double height = engine.getInterpolated((5.0d + x * scale) * ARCSECONDS_PER_DEGREE, (45.0d + y * scale) * ARCSECONDS_PER_DEGREE, grid);
+                    double height = engine.getInterpolated((minLon + x * scale) * ARCSECONDS_PER_DEGREE, (maxLat - y * scale) * ARCSECONDS_PER_DEGREE, grid);
                     /*if (height > 5) {
                         img.setARGB(x, y, 0xFFFFFFFF);
                     } else {
@@ -70,7 +72,7 @@ public class TestThing implements Constants {
 
             for (int x = w - 1; x >= 0; x--) {
                 for (int y = h - 1; y >= 0; y--) {
-                    img.setBW(x, h - 1 - y, (otherGrid.getI(x, y) - min) * 256 / max);
+                    img.setBW(x, y, (otherGrid.getI(x, y) - min) * 256 / max);
                 }
             }
 
