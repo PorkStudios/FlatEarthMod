@@ -46,7 +46,7 @@ public class EUWaterDataset implements Dataset, EUWaterConstants {
         return new File(this.root, String.format(
                 "extent_%d%c_%d%c.tif",
                 abs(degLon) / 10 * 10, degLon < 0 ? 'W' : 'E',
-                abs(degLat) / 10 * 10, degLat < 0 ? 'S' : 'N'
+                abs(degLat) / 10 * 10 + 10, degLat < 10 ? 'S' : 'N'
         ));
     }
 
@@ -58,7 +58,7 @@ public class EUWaterDataset implements Dataset, EUWaterConstants {
             if (file.exists()) {
                 Map params = this.paramCache.get();
                 params.put(TiffConstants.PARAM_KEY_SUBIMAGE_X, Constants.mod(tile.getDegLon(), 10) * EUWATER_SAMPLES_PER_DEGREE + tile.getTileLon() * EUWATER_SAMPLES_PER_TILE);
-                params.put(TiffConstants.PARAM_KEY_SUBIMAGE_Y, Constants.mod(tile.getDegLat(), 10) * EUWATER_SAMPLES_PER_DEGREE + tile.getTileLat() * EUWATER_SAMPLES_PER_TILE);
+                params.put(TiffConstants.PARAM_KEY_SUBIMAGE_Y, (9 - Constants.mod(tile.getDegLat(), 10)) * EUWATER_SAMPLES_PER_DEGREE + (STEPS_PER_DEGREE - 1 - tile.getTileLat()) * EUWATER_SAMPLES_PER_TILE);
                 img = Imaging.getBufferedImage(file, params);
             } else {
                 for (int x = TILE_SIZE - 1; x >= 0; x--)    {
@@ -72,15 +72,32 @@ public class EUWaterDataset implements Dataset, EUWaterConstants {
             throw new RuntimeException(tile.getPos().toString(), e);
         }
         Grid2d grid = this.gridCache.get();
+        //int water = 0;
         for (int x = EUWATER_SAMPLES_PER_TILE - 1; x >= 0; x--) {
             for (int y = EUWATER_SAMPLES_PER_TILE - 1; y >= 0; y--) {
-                grid.setI(x, y, img.getRGB(x, y) == 1 ? 1 : 0);
+                //not water: 0xFFFFFF
+                //water:     0x6666FF (but sometimes different)
+                //unknown:   0xCCCCCC
+                //int rgb = img.getRGB(x, y) & 0xFF0000;
+                /*if (rgb == 0x660000)    {
+                    water++;
+                }*/
+                grid.setI(x, y, (img.getRGB(x, EUWATER_SAMPLES_PER_TILE - 1 - y) & 0xFF0000) == 0x660000 ? 0xFF : 0);
             }
         }
-        double scale = (double) EUWATER_SAMPLES_PER_TILE / (double) TILE_SIZE;
+        /*if (water != 0) {
+            System.out.printf("Water points: %d\n", water);
+        }*/
+
+        double scale = (double) TILE_SIZE / (double) EUWATER_SAMPLES_PER_TILE;
         for (int x = TILE_SIZE - 1; x >= 0; x--) {
             for (int y = TILE_SIZE - 1; y >= 0; y--) {
-                tile.setWater(x, y, round(ENGINE_LINEAR.getInterpolated(x * scale, y * scale, grid)) != 0L);
+                /*double val = ENGINE_LINEAR.getInterpolated(x * scale, y * scale, grid);
+                if (val > 128.0d)   {
+                    int i = 0;
+                }
+                tile.setWater(x, y, val > 128.0d);*/
+                tile.setWater(x, y, ENGINE_LINEAR.getInterpolated(x * scale, y * scale, grid) > 128.0d);
             }
         }
     }

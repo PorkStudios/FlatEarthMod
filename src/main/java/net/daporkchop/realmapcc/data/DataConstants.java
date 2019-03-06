@@ -11,6 +11,7 @@ import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.ImagingConstants;
 import org.apache.commons.imaging.common.BufferedImageFactory;
+import org.apache.commons.imaging.formats.png.PngImageParser;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -21,13 +22,15 @@ import java.util.Collections;
  * @author DaPorkchop_
  */
 public interface DataConstants extends Constants {
+    PngImageParser PNG_PARSER = new PngImageParser();
+
     static String getSubpath(int degLon, int degLat, int tileLon, int tileLat)    {
         return String.format("%04d/%03d/%02d.%02d.png", degLon, degLat, tileLon, tileLat);
     }
 
     static void loadImage(@NonNull File file, @NonNull TileWrapperImage wrapper) throws IOException {
         try {
-            BufferedImage img = Imaging.getBufferedImage(file, Collections.singletonMap(ImagingConstants.BUFFERED_IMAGE_FACTORY, new DelegatingBufferedImageFactory(wrapper)));
+            BufferedImage img = PNG_PARSER.getBufferedImage(file, Collections.singletonMap(ImagingConstants.BUFFERED_IMAGE_FACTORY, new DelegatingBufferedImageFactory(wrapper)));
             if (img != wrapper.getAsBufferedImage())    {
                 throw new IllegalStateException("Decoded image was not the same instance!");
             }
@@ -43,7 +46,7 @@ public interface DataConstants extends Constants {
 
     static void loadImage(@NonNull byte[] data, @NonNull TileWrapperImage wrapper) throws IOException {
         try {
-            BufferedImage img = Imaging.getBufferedImage(data, Collections.singletonMap(ImagingConstants.BUFFERED_IMAGE_FACTORY, new DelegatingBufferedImageFactory(wrapper)));
+            BufferedImage img = PNG_PARSER.getBufferedImage(data, Collections.singletonMap(ImagingConstants.BUFFERED_IMAGE_FACTORY, new DelegatingBufferedImageFactory(wrapper)));
             if (img != wrapper.getAsBufferedImage())    {
                 throw new IllegalStateException("Decoded image was not the same instance!");
             }

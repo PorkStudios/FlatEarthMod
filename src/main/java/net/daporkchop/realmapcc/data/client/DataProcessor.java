@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
 import net.daporkchop.lib.math.interpolation.InterpolationEngine;
+import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.RealmapCC;
 import net.daporkchop.realmapcc.data.Tile;
@@ -23,8 +24,10 @@ import static net.daporkchop.lib.math.primitive.PMath.floorI;
 public class DataProcessor implements Constants {
     protected final TileLookup tileLookup = new CachedTileLookup().setDelegate(new DiskTileCache(new File(RealmapCC.Conf.dataCacheDir)).setDelegate(new RepoTileLookup()));
 
-    protected final InterpolationEngine engine = new CubicInterpolationEngine();
+    protected final InterpolationEngine engine = ENGINE_LINEAR;
     protected final LookupGrid2d heightGrid = new LookupGrid2d(this.tileLookup, Tile::getHeight);
+    protected final LookupGrid2d waterGrid = new LookupGrid2d(this.tileLookup, Tile::getIsWater);
+    protected final LookupGrid2d biomeGrid = new LookupGrid2d(this.tileLookup, Tile::getBiome);
 
     public void prepare(int chunkX, int chunkZ, @NonNull short[] heights)    {
         int colX = chunkX << 4;

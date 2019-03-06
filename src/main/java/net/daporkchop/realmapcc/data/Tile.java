@@ -83,6 +83,10 @@ public class Tile implements Constants {
         return (this.getRawVal(x, y) & WATER_MASK) != 0;
     }
 
+    public int getIsWater(int x, int y) {
+        return this.isWater(x, y) ? 1 : 0;
+    }
+
     public void setWater(int x, int y, boolean val) {
         this.setRawVal(x, y, (this.getRawVal(x, y) & ~WATER_MASK) | (val ? WATER_MASK : 0));
     }
