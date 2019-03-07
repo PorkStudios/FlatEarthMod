@@ -25,10 +25,8 @@ public class TestDataVisualization implements Constants {
         }
 
         if (true)   {
-            DataProcessor processor = new DataProcessor();
-            Grid2d heightGrid = processor.getHeightGrid();
-            Grid2d waterGrid = processor.getWaterGrid();
             InterpolationEngine engine = ENGINE_CUBIC;
+            DataProcessor processor = new DataProcessor();
 
             //centered precisely on Switzerland!
             double minLon = 5.0d;
@@ -44,20 +42,18 @@ public class TestDataVisualization implements Constants {
             Grid2d otherGrid = Grid2d.of(w, h, true);
             Grid2d finalGrid = Grid2d.of(w, h, false);
 
-            for (int x = w - 1; x >= 0; x--) {
-                for (int y = h - 1; y >= 0; y--) {
-                    double height = engine.getInterpolated((minLon + x * scale) * ARCSECONDS_PER_DEGREE, (maxLat - y * scale) * ARCSECONDS_PER_DEGREE, heightGrid);
-                    /*if (height > 5) {
-                        img.setARGB(x, y, 0xFFFFFFFF);
-                    } else {
-                        img.setBW(x, y, 0xFF000000);
-                    }*/
-                    //img.setRGB(x, y, floorI(height));
-                    otherGrid.setD(x, y, height);
-
-                    finalGrid.setI(x, y, engine.getInterpolated((minLon + x * scale) * ARCSECONDS_PER_DEGREE, (maxLat - y * scale) * ARCSECONDS_PER_DEGREE, waterGrid) > 0.5d ? 1 : 0);
-                }
-            }
+            processor.forEachValueInRange(
+                    minLon,
+                    maxLat - h * scale,
+                    w,
+                    h,
+                    scale,
+                    (xStep, yStep, height, waterPresence, biome) -> {
+                        otherGrid.setI(xStep, yStep, height);
+                        finalGrid.setI(xStep, yStep, waterPresence ? 1 : 0);
+                    },
+                    null
+            );
 
             int max = Integer.MIN_VALUE;
             int min = Integer.MAX_VALUE;
