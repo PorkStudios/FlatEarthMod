@@ -89,7 +89,8 @@ public class EUWaterDataset implements Dataset, EUWaterConstants {
             System.out.printf("Water points: %d\n", water);
         }*/
 
-        double scale = (double) TILE_SIZE / (double) EUWATER_SAMPLES_PER_TILE;
+        double scale = (double) EUWATER_SAMPLES_PER_TILE / (double) TILE_SIZE /*(double) TILE_SIZE / (double) EUWATER_SAMPLES_PER_TILE*/;
+        //scale = 0.9d;
         for (int x = TILE_SIZE - 1; x >= 0; x--) {
             for (int y = TILE_SIZE - 1; y >= 0; y--) {
                 /*double val = ENGINE_LINEAR.getInterpolated(x * scale, y * scale, grid);
@@ -97,7 +98,7 @@ public class EUWaterDataset implements Dataset, EUWaterConstants {
                     int i = 0;
                 }
                 tile.setWater(x, y, val > 128.0d);*/
-                tile.setWater(x, y, ENGINE_LINEAR.getInterpolated(x * scale, y * scale, grid) > 128.0d);
+                tile.setWater(x, y, ENGINE_CUBIC.getInterpolated(x * scale, y * scale, grid) > 128.0d);
             }
         }
     }

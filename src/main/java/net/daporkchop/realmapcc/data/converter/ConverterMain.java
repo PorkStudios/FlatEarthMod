@@ -137,10 +137,14 @@ public class ConverterMain implements Constants, Logging {
             int priorityStartLat = 45;
             int priorityEndLon = 10;
             int priorityEndLat = 47;
-            /*int priorityStartLon = 8;
-            int priorityStartLat = 47;
-            int priorityEndLon = 8;
-            int priorityEndLat = 47;*/
+            /*priorityStartLon = 8;
+            priorityStartLat = 47;
+            priorityEndLon = 8;
+            priorityEndLat = 47;*/
+            priorityStartLon = 0;
+            priorityStartLat = 40;
+            priorityEndLon = 10;
+            priorityEndLat = 50;
             for (int x = priorityStartLon; x <= priorityEndLon; x++)    {
                 for (int y = priorityStartLat; y <= priorityEndLat; y++)    {
                     verification.add(positions[i++] = new Vec2i(x, y));

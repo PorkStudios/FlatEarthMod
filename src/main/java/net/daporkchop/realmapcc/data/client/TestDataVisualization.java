@@ -6,6 +6,7 @@ import net.daporkchop.lib.graphics.impl.image.DirectImage;
 import net.daporkchop.lib.math.arrays.grid.Grid2d;
 import net.daporkchop.lib.math.interpolation.InterpolationEngine;
 import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
+import net.daporkchop.lib.math.interpolation.NearestNeighborInterpolationEngine;
 import net.daporkchop.realmapcc.Constants;
 import net.daporkchop.realmapcc.RealmapCC;
 import org.apache.commons.imaging.ImageWriteException;
@@ -26,31 +27,40 @@ public class TestDataVisualization implements Constants {
 
         if (true)   {
             InterpolationEngine engine = ENGINE_CUBIC;
-            DataProcessor processor = new DataProcessor();
+            DataProcessor processor = new DataProcessor(engine);
 
             //centered precisely on Switzerland!
             double minLon = 5.0d;
-            double maxLat = 48.0d;
-            int w = 1600;
-            double hMult = 3.0d / 5.0d;
+            double minLat = 48.0d;
+            double realWidth = 5.0d;
+            int w = 1024;
+            double hMult = 3.0d / realWidth;
+
+            if (false)   {
+                //centered on Zug, Switzerland
+                minLon = 8.455d;
+                minLat = 47.15d;
+                realWidth = 0.1d;
+                hMult = 0.1d / realWidth;
+                //hMult = 1.0d;
+            }
 
             int h = floorI(w * hMult);
-            double scaleBase = 5.0d;
-            double scale = 1.0d / w * scaleBase;
+            double scale = 1.0d / w * realWidth;
 
             PImage img = new DirectImage(w, h, false);
-            Grid2d otherGrid = Grid2d.of(w, h, true);
+            Grid2d otherGrid = Grid2d.of(w, h, false);
             Grid2d finalGrid = Grid2d.of(w, h, false);
 
             processor.forEachValueInRange(
                     minLon,
-                    maxLat - h * scale,
+                    minLat,
                     w,
                     h,
                     scale,
                     (xStep, yStep, height, waterPresence, biome) -> {
-                        otherGrid.setI(xStep, yStep, height);
-                        finalGrid.setI(xStep, yStep, waterPresence ? 1 : 0);
+                        otherGrid.setI(xStep, h - 1 - yStep, height);
+                        finalGrid.setI(xStep, h - 1 - yStep, waterPresence ? 1 : 0);
                     },
                     null
             );

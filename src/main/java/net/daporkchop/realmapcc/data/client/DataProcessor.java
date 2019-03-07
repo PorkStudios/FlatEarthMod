@@ -66,20 +66,24 @@ public class DataProcessor implements Constants {
     }
 
     public LookupCache forEachValueInRange(double lon, double lat, int xSteps, int ySteps, double step, @NonNull TerrainDataConsumer consumer, LookupCache cache)    {
+        lon *= ARCSECONDS_PER_DEGREE;
+        lat *= ARCSECONDS_PER_DEGREE;
+        step *= ARCSECONDS_PER_DEGREE;
         {
-            int arcSecondsLon = floorI(lon * ARCSECONDS_PER_DEGREE);
-            int arcSecondsLat = floorI(lat * ARCSECONDS_PER_DEGREE);
-            int w = floorI(xSteps * step * ARCSECONDS_PER_DEGREE);
-            int h = floorI(ySteps * step * ARCSECONDS_PER_DEGREE);
+            int arcSecondsLon = floorI(lon);
+            int arcSecondsLat = floorI(lat);
+            int w = floorI(xSteps * step) + 1;
+            int h = floorI(ySteps * step) + 1;
 
             int pad = this.engine.requiredRadius();
+            int a = 0/*pad == 0 ? 0 : 0*/; //TODO: might be needed?
 
-            if (cache == null || cache.w != w + 2 * pad - 1 || cache.h != h + 2 * pad - 1) {
+            if (cache == null || cache.w != w + 2 * pad - a || cache.h != h + 2 * pad - a) {
                 cache = new LookupCache(
-                        arcSecondsLon - pad - 1,
-                        arcSecondsLat - pad - 1,
-                        w + 2 * pad - 1,
-                        h + 2 * pad - 1
+                        arcSecondsLon - pad - a,
+                        arcSecondsLat - pad - a,
+                        w + 2 * pad - a,
+                        h + 2 * pad - a
                 );
             } else {
                 cache.setLon(arcSecondsLon).setLat(arcSecondsLat);
@@ -100,7 +104,7 @@ public class DataProcessor implements Constants {
                         x,
                         y,
                         this.engine.getInterpolatedI(valLon, valLat, height),
-                        this.engine.getInterpolated(valLon, valLat, water) > 0.5d,
+                        this.engine.getInterpolated(valLon, valLat, water) >= 0.5d,
                         -1
                 );
             }

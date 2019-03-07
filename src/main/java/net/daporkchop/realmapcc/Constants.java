@@ -5,6 +5,7 @@ import net.daporkchop.lib.graphics.util.ImageInterpolator;
 import net.daporkchop.lib.math.interpolation.CubicInterpolationEngine;
 import net.daporkchop.lib.math.interpolation.InterpolationEngine;
 import net.daporkchop.lib.math.interpolation.LinearInterpolationEngine;
+import net.daporkchop.lib.math.interpolation.NearestNeighborInterpolationEngine;
 import net.daporkchop.lib.math.vector.d.Vec2d;
 import net.daporkchop.lib.math.vector.i.Vec2i;
 import net.minecraft.util.math.BlockPos;
@@ -70,8 +71,10 @@ public interface Constants {
     double METERS_PER_ARCSECOND = (double) EARTH_CIRCUMFERENCE / (double) LON_ARCSECONDS_TOTAL;
 
     double ARCSECONDS_PER_METER = (double) LON_ARCSECONDS_TOTAL / (double) EARTH_CIRCUMFERENCE;
+    InterpolationEngine ENGINE_NEAREST = new NearestNeighborInterpolationEngine();
     InterpolationEngine ENGINE_LINEAR = new LinearInterpolationEngine();
     InterpolationEngine ENGINE_CUBIC = new CubicInterpolationEngine();
+    ImageInterpolator INTERPOLATOR_NEAREST = new ImageInterpolator(ENGINE_NEAREST);
     ImageInterpolator INTERPOLATOR_LINEAR = new ImageInterpolator(ENGINE_LINEAR);
     ImageInterpolator INTERPOLATOR_CUBIC = new ImageInterpolator(ENGINE_CUBIC);
     //some older values from way back when

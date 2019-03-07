@@ -34,17 +34,21 @@ public class LookupCache implements Constants {
         this.h = h;
 
         this.addr = PUnsafe.allocateMemory(this, ((long) w * (long) h) << 2L);
+        PUnsafe.setMemory(this.addr, ((long) w * (long) h) << 2L, (byte) 0);
     }
 
     public LookupCache load(@NonNull TileLookup lookup) {
         Tile tile = null;
 
+        //TODO: this can be optimized even further by loading in an entire tile at a time rather than iterating over the entire area one line at a time
         for (int x = this.w - 1; x >= 0; x--) {
             for (int y = this.h - 1; y >= 0; y--) {
-                int degLon = (x + this.lon) / ARCSECONDS_PER_DEGREE;
-                int degLat = (y + this.lat) / ARCSECONDS_PER_DEGREE;
-                int tileLon = Constants.mod((x + this.lon) / TILE_SIZE, STEPS_PER_DEGREE);
-                int tileLat = Constants.mod((y + this.lat) / TILE_SIZE, STEPS_PER_DEGREE);
+                int subLon = Constants.mod(x, TILE_SIZE);
+                int subLat = Constants.mod(y, TILE_SIZE);
+                int tileLon = Constants.mod((x - subLon + this.lon) / TILE_SIZE, STEPS_PER_DEGREE);
+                int tileLat = Constants.mod((y - subLat + this.lat) / TILE_SIZE, STEPS_PER_DEGREE);
+                int degLon = (x - subLon - tileLon * STEPS_PER_DEGREE + this.lon) / ARCSECONDS_PER_DEGREE;
+                int degLat = (y - subLat - tileLat * STEPS_PER_DEGREE + this.lat) / ARCSECONDS_PER_DEGREE;
 
                 if (tile == null
                         || tile.getDegLon() != degLon
