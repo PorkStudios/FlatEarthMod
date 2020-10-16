@@ -1,3 +1,18 @@
+/*
+ * Adapted from the Wizardry License
+ *
+ * Copyright (c) 2018-2020 DaPorkchop_ and contributors
+ *
+ * Permission is hereby granted to any persons and/or organizations using this software to copy, modify, merge, publish, and distribute it. Said persons and/or organizations are not allowed to use the software or any derivatives of the work for commercial use or any other means to generate income, nor are they allowed to claim this software as their own.
+ *
+ * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from DaPorkchop_.
+ *
+ * Any persons and/or organizations using this software must disclose their source code and have it publicly available, include this license, provide sufficient credit to the original authors of the project (IE: DaPorkchop_), as well as provide a link to the original project.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
 package net.daporkchop.realmapcc.generator;
 
 import io.github.opencubicchunks.cubicchunks.api.util.Box;
@@ -7,13 +22,7 @@ import io.github.opencubicchunks.cubicchunks.api.world.ICube;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.CubePrimer;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.populator.CubePopulatorEvent;
-import net.daporkchop.realmapcc.Constants;
-import net.daporkchop.realmapcc.capability.HeightsCapability;
-import net.daporkchop.realmapcc.capability.ITerrainHeightHolder;
-import net.daporkchop.realmapcc.data.client.DataProcessor;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -28,10 +37,8 @@ import java.util.Random;
 /**
  * @author DaPorkchop_
  */
-public class RealTerrainGenerator implements ICubeGenerator, Constants {
+public class RealTerrainGenerator implements ICubeGenerator {
     private final World world;
-
-    protected final DataProcessor processor = new DataProcessor();
 
     public RealTerrainGenerator(World world) {
         this.world = world;
@@ -39,44 +46,11 @@ public class RealTerrainGenerator implements ICubeGenerator, Constants {
 
     @Override
     public void generateColumn(Chunk column) {
-        ITerrainHeightHolder heightHolder = column.getCapability(HeightsCapability.TERRAIN_HEIGHT_CAPABILITY, null);
-        if (heightHolder == null) {
-            throw new RuntimeException(String.format("Column (%d,%d) does not have the terrain height capability!", column.x, column.z));
-        }
-        heightHolder.setHeights(new short[16 * 16]);
-        this.processor.prepare(column.x, column.z, heightHolder.getHeights());
-        //TODO: set biomes
     }
 
     @Override
     public CubePrimer generateCube(int cubeX, int cubeY, int cubeZ) {
-        short[] heights;
-        {
-            Chunk column = this.world.getChunkFromChunkCoords(cubeX, cubeZ);
-            ITerrainHeightHolder heightHolder = column.getCapability(HeightsCapability.TERRAIN_HEIGHT_CAPABILITY, null);
-            if (heightHolder == null) {
-                throw new RuntimeException(String.format("Column (%d,%d) does not have the terrain height capability!", column.x, column.z));
-            }
-            heights = heightHolder.getHeights();
-        }
-        if (heights == null) {
-            throw new RuntimeException(String.format("Column (%d,%d) has no elevation data!", cubeX, cubeZ));
-        }
-
-        CubePrimer primer = new CubePrimer();
-        IBlockState stone = Blocks.STONE.getDefaultState();
-        for (int x = 15; x >= 0; x--) {
-            for (int z = 15; z >= 0; z--) {
-                int height = heights[(x << 4) | z];
-                for (int y = 0; y < 16; y++) {
-                    if (((cubeY << 4) | y) > height) {
-                        break;
-                    }
-                    primer.setBlockState(x, y, z, stone);
-                }
-            }
-        }
-        return primer;
+        return new CubePrimer();
     }
 
     @Override

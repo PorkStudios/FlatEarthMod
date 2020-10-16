@@ -1,14 +1,23 @@
+/*
+ * Adapted from the Wizardry License
+ *
+ * Copyright (c) 2018-2020 DaPorkchop_ and contributors
+ *
+ * Permission is hereby granted to any persons and/or organizations using this software to copy, modify, merge, publish, and distribute it. Said persons and/or organizations are not allowed to use the software or any derivatives of the work for commercial use or any other means to generate income, nor are they allowed to claim this software as their own.
+ *
+ * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from DaPorkchop_.
+ *
+ * Any persons and/or organizations using this software must disclose their source code and have it publicly available, include this license, provide sufficient credit to the original authors of the project (IE: DaPorkchop_), as well as provide a link to the original project.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
 package net.daporkchop.realmapcc;
 
-import net.daporkchop.realmapcc.capability.HeightsCapability;
 import net.daporkchop.realmapcc.command.CommandTPR;
-import net.daporkchop.realmapcc.data.Tile;
-import net.daporkchop.realmapcc.data.client.DataProcessor;
-import net.daporkchop.realmapcc.data.client.LookupGrid2d;
 import net.daporkchop.realmapcc.generator.RealWorldType;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Config;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
@@ -20,38 +29,25 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 @Mod(
         modid = RealmapCC.MOD_ID,
         name = RealmapCC.MOD_NAME,
-        version = RealmapCC.VERSION/*,
-        dependencies = "required-after:cubicgen"*/
-)
-public class RealmapCC implements Constants {
+        dependencies = "required-after:cubicchunks; required-after:cubicgen",
+        acceptableRemoteVersions = "*",
+        useMetadata = true)
+public class RealmapCC {
     public static final String MOD_ID = "realmapcc";
     public static final String MOD_NAME = "Realmap - Cubic Chunks";
-    public static final String VERSION = "1.0-SNAPSHOT";
     @Mod.Instance(MOD_ID)
     public static RealmapCC INSTANCE;
     public static Logger logger;
-
-    static {
-        //hey let's go overboard
-        Stream.of(
-                null
-                , Tile.class
-                , LookupGrid2d.class
-                , DataProcessor.class
-        ).filter(Objects::nonNull).forEach(Compiler::compileClass);
-    }
 
     public static File getWorkingFolder() {
         File toBeReturned;
         try {
             if (FMLCommonHandler.instance().getSide().isClient()) {
-                toBeReturned = Minecraft.getMinecraft().mcDataDir;
+                toBeReturned = Minecraft.getMinecraft().gameDir;
             } else {
                 toBeReturned = FMLCommonHandler.instance().getMinecraftServerInstance().getFile("");
             }
@@ -72,10 +68,6 @@ public class RealmapCC implements Constants {
 
         //GeneratorSettingsFix.addFixableWorldType(new RealWorldType());
         new RealWorldType();
-
-        HeightsCapability.register();
-
-        MinecraftForge.EVENT_BUS.register(new Events());
     }
 
     @Mod.EventHandler
@@ -89,47 +81,5 @@ public class RealmapCC implements Constants {
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandTPR());
-    }
-
-    @Config(modid = MOD_ID)
-    public static class Conf {
-        @Config.Comment({
-                "The scale multiplier on the horizontal axes (X/Z)."
-        })
-        public static double scaleHoriz = 1.0d;
-
-        @Config.Comment({
-                "The scale multiplier for the vertical (Y) axis."
-        })
-        public static double scaleVert = 1.0d;
-
-        @Config.Comment({
-                "Whether or not to fail (crash the game) if a specific terrain tile couldn't be obtained from either the disk cache or remote server.",
-                "If false, unobtainable tiles will simply be filled with ocean at y=0"
-        })
-        public static boolean failIfTileNotFound = false;
-
-        @Config.Comment({
-                "The maximum number of tiles to keep cached in memory at once.",
-                "Each tile is about 220kb once fully loaded, so keep this in mind when configuring this value.",
-                "Setting this too low can lead to horrible performance."
-        })
-        public static long maxTileCacheSize = 256L;
-
-        @Config.Comment({
-                "The base URL of the server from which will terrain data will be obtained.",
-                "Must end with a trailing slash.",
-                "Don't touch this unless you know what you're doing!"
-        })
-        public static String dataBaseUrl = "https://cloud.daporkchop.net/minecraft/mods/realworldcc/data/";
-
-        @Config.Comment({
-                "The root directory in which terrain data will be cached.",
-                "Relative paths are treated as being relative to either your .minecraft folder (for clients) or the directory from which the server was started (for servers)",
-                "If it starts to get too big, it may be safely deleted when the game isn't running, but be aware that this may come at a performance cost!",
-                "Must end with a trailing slash.",
-                "Most of the time there should be no reason to change this."
-        })
-        public static String dataCacheDir = "./realmapcc/data/";
     }
 }
